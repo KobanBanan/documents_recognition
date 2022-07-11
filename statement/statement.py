@@ -1,14 +1,14 @@
 import os
 import pathlib
 import re
+from typing import Dict
 
 import PyPDF2
 import pandas as pd
-from natasha import MorphVocab, NamesExtractor
-from tqdm.auto import tqdm
-from pathlib import Path
+import streamlit as st
+from stqdm import stqdm
 
-FIELDS = [
+STATEMENT_COLS = [
     "LoanAmount",
     "LastName",
     "FirstName",
@@ -19,63 +19,8 @@ FIELDS = [
     "SigningDate"
 ]
 
-STATEMENT_PATH = '/Users/a1234/Desktop/archives/statement'
 
-morph_vocab = MorphVocab()
-names_extractor = NamesExtractor(morph_vocab)
-
-
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if pathlib.Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
-
-
-def collect_statement_data(path_to_file: str):
-    """
-
-    :param path_to_file:
-    :return:
-    """
-
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
-
-    num_pages = range(pdf_reader.numPages)
-    first_page_data = pdf_reader.getPage(0).extractText()
-    last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
-
-    name = extract_name(first_page_data)
-    name = [n for n in name.split(" ") if n]
-    last, first, middle = (name[0], name[1], " ".join(name[2:])) if name else (None, None, None)
-
-    passport = extract_passport(first_page_data)
-    series, number = passport
-
-    date = extract_date(last_page_data)
-
-    birthday = extarc_birthday(first_page_data)
-    birthday = ".".join(birthday) if birthday else None
-    # pdf_file_obj.close()
-
-    loan = extarc_load_amount(first_page_data)
-
-    return {
-        "file": Path(path_to_file).name,
-        "LoanAmount": loan,
-        "LastName": last,
-        "FirstName": first,
-        "MiddleName": middle,
-        "BirthDate": birthday,
-        "PassportSeries": series,
-        "PassportNumber": number,
-        "SigningDate": date
-    }
-
+# STATEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
 
 # TODO оч плохо
 def extarc_load_amount(f):
@@ -131,13 +76,79 @@ def extract_name(s):
     return ""
 
 
-collected_documents = collect_documents(STATEMENT_PATH)
+def collect_documents(directory):
+    docs = []
+    for dirpath, _, filenames in os.walk(directory):
+        for f in filenames:
+            if pathlib.Path(f).suffix in ('.pdf',):
+                docs.append(os.path.abspath(os.path.join(dirpath, f)))
 
-result = []
+    return docs
 
-for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-    data = collect_statement_data(doc)
-    result.append(data)
 
-df = pd.DataFrame(result)
-df.to_csv('statement.csv', index=False)
+def collect_statement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
+    """
+
+    :param pdf_dict:
+    :return:
+    """
+    result = []
+    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+        try:
+            num_pages = range(pdf_reader.numPages)
+            first_page_data = pdf_reader.getPage(0).extractText()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+
+            name = extract_name(first_page_data)
+            name = [n for n in name.split(" ") if n]
+            last, first, middle = (name[0], name[1], " ".join(name[2:])) if name else (None, None, None)
+
+            passport = extract_passport(first_page_data)
+            series, number = passport
+
+            date = extract_date(last_page_data)
+
+            birthday = extarc_birthday(first_page_data)
+            birthday = ".".join(birthday) if birthday else None
+            # pdf_file_obj.close()
+
+            loan = extarc_load_amount(first_page_data)
+
+            result.append({
+                "file": file_name,
+                "LoanAmount": loan,
+                "LastName": last,
+                "FirstName": first,
+                "MiddleName": middle,
+                "BirthDate": birthday,
+                "PassportSeries": series,
+                "PassportNumber": number,
+                "SigningDate": date
+            })
+        except Exception as e:
+            st.error(f'Ошибка разспознавания документа {file_name}')
+            result.append(
+                {
+                    "file": file_name,
+                    "LoanAmount": None,
+                    "LastName": None,
+                    "FirstName": None,
+                    "MiddleName": None,
+                    "BirthDate": None,
+                    "PassportSeries": None,
+                    "PassportNumber": None,
+                    "SigningDate": None
+                }
+            )
+    return pd.DataFrame(result).dropna(subset=STATEMENT_COLS)
+
+# collected_documents = collect_documents(STATEMENT_PATH)
+#
+# result = []
+#
+# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+#     data = collect_statement_data(doc)
+#     result.append(data)
+#
+# df = pd.DataFrame(result)
+# df.to_csv('statement.csv', index=False)

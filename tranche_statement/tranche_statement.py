@@ -1,14 +1,32 @@
 import os
 import pathlib
 import re
-from pathlib import Path
+from typing import Dict
 
 import PyPDF2
 import pandas as pd
-from tqdm.auto import tqdm
+import streamlit as st
+from stqdm import stqdm
 
-TRANCHE_PATH = '/Users/a1234/Desktop/archives/tranche_statement'
-EMPTY_RESULT = 'отсутствует у этого варианта документа'
+# TRANCHE_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
+EMPTY_RESULT = None
+TRANCHE_STATEMENT_COLS = [
+    "TrancheNumber",
+    "TrancheDate",
+    "ParentContractNumber",
+    "ParentContractDate",
+    "TrancheAmount",
+    "TrancheTerm",
+    "TranchePercent",
+    "TrancePercentYear",
+    "TrancheFullAmount",
+    "CustomerName",
+    "CustomerBirth",
+    "CustomerPassportSeries",
+    "CustomerPassportNumber",
+    "CustomerSignatureDate",
+    "TrancheSigningDate"
+]
 
 
 def collect_documents(directory):
@@ -189,188 +207,213 @@ def get_case(s):
         return 1
 
 
-def collect_tranche_statement_data(path_to_file: str):
+def collect_tranche_statement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     """
 
-    :param path_to_file:
+    :param pdf_dict:
     :return:
     """
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
+    result = []
+    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+        try:
+            num_pages = range(pdf_reader.numPages)
 
-    num_pages = range(pdf_reader.numPages)
+            first_page_data = pdf_reader.getPage(0).extractText()
+            pre_penultimate_page = pdf_reader.getPage(num_pages[-3]).extractText() if len(
+                num_pages) > 2 else first_page_data
+            penultimate_page = pdf_reader.getPage(num_pages[-2]).extractText() if len(
+                num_pages) > 1 else first_page_data
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
 
-    first_page_data = pdf_reader.getPage(0).extractText()
-    pre_penultimate_page = pdf_reader.getPage(num_pages[-3]).extractText() if len(num_pages) > 2 else first_page_data
-    penultimate_page = pdf_reader.getPage(num_pages[-2]).extractText() if len(num_pages) > 1 else first_page_data
-    last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+            case = get_case(first_page_data)
 
-    case = get_case(first_page_data)
+            if case == 1:
+                # case 2
+                # --------------------------------------------------------------------------------------------------------------
+                tranche_number = extract(first_page_data.replace('\n', ' '), r'(?<=Транш № )(.*?)(?=Договор)')
+                parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
+                parent_contract_number = extract_parent_contract_number(first_page_data)
+                tranche_amount = extract_tranche_amount(first_page_data)
+                tranche_term = extract_tranche_term(first_page_data)
+                tranche_percent = extract_tranche_percent(first_page_data)
+                tranche_percent_year = extract_tranche_percent_year(first_page_data.replace('\n', ''))
+                tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', ''))  # todo
 
-    if case == 1:
-        # case 2
-        # --------------------------------------------------------------------------------------------------------------
-        tranche_number = extract(first_page_data.replace('\n', ' '), r'(?<=Транш № )(.*?)(?=Договор)')
-        parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
-        parent_contract_number = extract_parent_contract_number(first_page_data)
-        tranche_amount = extract_tranche_amount(first_page_data)
-        tranche_term = extract_tranche_term(first_page_data)
-        tranche_percent = extract_tranche_percent(first_page_data)
-        tranche_percent_year = extract_tranche_percent_year(first_page_data.replace('\n', ''))
-        tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', ''))  # todo
+                customer_name = extract_customer_name(last_page_data)
+                customer_birth = extract(last_page_data, r'(?<=, )[^,]+(?= года)')
+                customer_passport_series = extract_customer_passport_series(last_page_data.replace('\n', ''))
+                customer_passport_number = extract_customer_passport_number(last_page_data)
+                customer_signature_date = extract_customer_signature_date(last_page_data)
+                tranche_signing_date = extract_tranche_signing_date(last_page_data.replace('\n', ''))
 
-        customer_name = extract_customer_name(last_page_data)
-        customer_birth = extract(last_page_data, r'(?<=, )[^,]+(?= года)')
-        customer_passport_series = extract_customer_passport_series(last_page_data.replace('\n', ''))
-        customer_passport_number = extract_customer_passport_number(last_page_data)
-        customer_signature_date = extract_customer_signature_date(last_page_data)
-        tranche_signing_date = extract_tranche_signing_date(last_page_data.replace('\n', ''))
+                result.append({
+                    'case': case,
+                    "file": file_name,
+                    "TrancheNumber": tranche_number,
+                    "TrancheDate": EMPTY_RESULT,
+                    "ParentContractNumber": parent_contract_date,
+                    "ParentContractDate": parent_contract_number,
+                    "TrancheAmount": tranche_amount,
+                    "TrancheTerm": tranche_term,
+                    "TranchePercent": tranche_percent,
+                    "TrancePercentYear": tranche_percent_year,
+                    "TrancheFullAmount": tranche_full_amount,
+                    "CustomerName": customer_name,
+                    "CustomerBirth": customer_birth,
+                    "CustomerPassportSeries": customer_passport_series,
+                    "CustomerPassportNumber": customer_passport_number,
+                    "CustomerSignatureDate": customer_signature_date,
+                    "TrancheSigningDate": tranche_signing_date
+                })
 
-        return {
-            'case': case,
-            "TrancheNumber": tranche_number,
-            "TrancheDate": EMPTY_RESULT,
-            "ParentContractNumber": parent_contract_date,
-            "ParentContractDate": parent_contract_number,
-            "TrancheAmount": tranche_amount,
-            "TrancheTerm": tranche_term,
-            "TranchePercent": tranche_percent,
-            "TrancePercentYear": tranche_percent_year,
-            "TrancheFullAmount": tranche_full_amount,
-            "CustomerName": customer_name,
-            "CustomerBirth": customer_birth,
-            "CustomerPassportSeries": customer_passport_series,
-            "CustomerPassportNumber": customer_passport_number,
-            "CustomerSignatureDate": customer_signature_date,
-            "TrancheSigningDate": tranche_signing_date
-        }
+            if case == 2:
+                # case 2
+                # --------------------------------------------------------------------------------------------------------------
 
-    if case == 2:
-        # case 2
-        # --------------------------------------------------------------------------------------------------------------
+                third_page_data = pdf_reader.getPage(2).extractText()
 
-        third_page_data = pdf_reader.getPage(2).extractText()
+                tranche_number = extract_tranche_number(first_page_data)
+                tranche_date = extract_tranche_date(first_page_data.replace('\n', ''))
+                parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
+                parent_contract_number = extract_parent_contract_number(first_page_data)
+                tranche_amount = extract_tranche_amount(first_page_data)
+                tranche_term = extract_tranche_term(first_page_data)
+                tranche_percent = extract_tranche_percent(first_page_data)
+                tranche_percent_year = extract_tranche_percent_year(first_page_data)
+                tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', ''))
 
-        tranche_number = extract_tranche_number(first_page_data)
-        tranche_date = extract_tranche_date(first_page_data.replace('\n', ''))
-        parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
-        parent_contract_number = extract_parent_contract_number(first_page_data)
-        tranche_amount = extract_tranche_amount(first_page_data)
-        tranche_term = extract_tranche_term(first_page_data)
-        tranche_percent = extract_tranche_percent(first_page_data)
-        tranche_percent_year = extract_tranche_percent_year(first_page_data)
-        tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', ''))
+                customer_name = (
+                        extract_customer_name(penultimate_page) or
+                        extract_customer_name(pre_penultimate_page)
+                )
+                # customer_name = [n for n in customer_name.split(" ") if n] if all(customer_name) else customer_name
+                customer_birth = (
+                        extract_customer_birth(penultimate_page) or
+                        extract_customer_birth(pre_penultimate_page)
+                )
+                customer_passport_series = (
+                        extract_customer_passport_series(penultimate_page) or
+                        extract_customer_passport_series(pre_penultimate_page)
+                )
+                customer_passport_number = (
+                        extract_customer_passport_number(penultimate_page) or
+                        extract_customer_passport_number(pre_penultimate_page)
+                )
+                customer_signature_date = (
+                        extract_customer_signature_date(penultimate_page) or
+                        extract_customer_signature_date(pre_penultimate_page)
+                )
+                tranche_signing_date = (
+                        extract_tranche_signing_date(penultimate_page.replace('\n', '')) or
+                        extract_tranche_signing_date(pre_penultimate_page.replace('\n', ''))
+                )
 
-        customer_name = (
-                extract_customer_name(penultimate_page) or
-                extract_customer_name(pre_penultimate_page)
-        )
-        # customer_name = [n for n in customer_name.split(" ") if n] if all(customer_name) else customer_name
-        customer_birth = (
-                extract_customer_birth(penultimate_page) or
-                extract_customer_birth(pre_penultimate_page)
-        )
-        customer_passport_series = (
-                extract_customer_passport_series(penultimate_page) or
-                extract_customer_passport_series(pre_penultimate_page)
-        )
-        customer_passport_number = (
-                extract_customer_passport_number(penultimate_page) or
-                extract_customer_passport_number(pre_penultimate_page)
-        )
-        customer_signature_date = (
-                extract_customer_signature_date(penultimate_page) or
-                extract_customer_signature_date(pre_penultimate_page)
-        )
-        tranche_signing_date = (
-                extract_tranche_signing_date(penultimate_page.replace('\n', '')) or
-                extract_tranche_signing_date(pre_penultimate_page.replace('\n', ''))
-        )
+                result.append({
+                    'case': case,
+                    "file": file_name,
+                    "TrancheNumber": tranche_number,
+                    "TrancheDate": tranche_date,
+                    "ParentContractNumber": parent_contract_number,
+                    "ParentContractDate": parent_contract_date,
+                    "TrancheAmount": tranche_amount,
+                    "TrancheTerm": tranche_term,
+                    "TranchePercent": tranche_percent,
+                    "TrancePercentYear": tranche_percent_year,
+                    "TrancheFullAmount": tranche_full_amount,
+                    "CustomerName": customer_name,
+                    "CustomerBirth": customer_birth,
+                    "CustomerPassportSeries": customer_passport_series,
+                    "CustomerPassportNumber": customer_passport_number,
+                    "CustomerSignatureDate": customer_signature_date,
+                    "TrancheSigningDate": tranche_signing_date
+                })
 
-        return {
-            'case': case,
-            "file": Path(path_to_file).name,
-            "TrancheNumber": tranche_number,
-            "TrancheDate": tranche_date,
-            "ParentContractNumber": parent_contract_number,
-            "ParentContractDate": parent_contract_date,
-            "TrancheAmount": tranche_amount,
-            "TrancheTerm": tranche_term,
-            "TranchePercent": tranche_percent,
-            "TrancePercentYear": tranche_percent_year,
-            "TrancheFullAmount": tranche_full_amount,
-            "CustomerName": customer_name,
-            "CustomerBirth": customer_birth,
-            "CustomerPassportSeries": customer_passport_series,
-            "CustomerPassportNumber": customer_passport_number,
-            "CustomerSignatureDate": customer_signature_date,
-            "TrancheSigningDate": tranche_signing_date
-        }
+            if case == 3:
+                # case 3
+                # --------------------------------------------------------------------------------------------------------------
+                tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', '').replace(')', ''))
+                tranche_term = extract(first_page_data, '(?<=составляет)(.*?)(?=мес)')
+                parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
+                parent_contract_number = extract_parent_contract_number(first_page_data)
 
-    if case == 3:
-        # case 3
-        # --------------------------------------------------------------------------------------------------------------
-        tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', '').replace(')', ''))
-        tranche_term = extract(first_page_data, '(?<=составляет)(.*?)(?=мес)')
-        parent_contract_date = extract_parent_contract_date(first_page_data.replace('\n', ''))
-        parent_contract_number = extract_parent_contract_number(first_page_data)
+                customer_name = extract_customer_name(penultimate_page)
+                # customer_name = [n for n in customer_name.split(" ") if n] if all(customer_name) else customer_name
+                customer_birth = extract_customer_birth(penultimate_page)
+                customer_passport_series = extract_customer_passport_series(penultimate_page)
+                customer_passport_number = extract_customer_passport_number(penultimate_page.replace('\n', ''))
+                customer_signature_date = extract_customer_signature_date(penultimate_page)
+                tranche_signing_date = extract_tranche_signing_date(penultimate_page)
 
-        customer_name = extract_customer_name(penultimate_page)
-        # customer_name = [n for n in customer_name.split(" ") if n] if all(customer_name) else customer_name
-        customer_birth = extract_customer_birth(penultimate_page)
-        customer_passport_series = extract_customer_passport_series(penultimate_page)
-        customer_passport_number = extract_customer_passport_number(penultimate_page.replace('\n', ''))
-        customer_signature_date = extract_customer_signature_date(penultimate_page)
-        tranche_signing_date = extract_tranche_signing_date(penultimate_page)
+                result.append({
+                    'case': case,
+                    "file": file_name,
+                    "TrancheNumber": EMPTY_RESULT,
+                    "TrancheDate": EMPTY_RESULT,
+                    "ParentContractNumber": parent_contract_number,
+                    "ParentContractDate": parent_contract_date,
+                    "TrancheAmount": tranche_full_amount,
+                    "TrancheTerm": tranche_term,
+                    "TranchePercent": EMPTY_RESULT,
+                    "TrancePercentYear": EMPTY_RESULT,
+                    "TrancheFullAmount": tranche_full_amount,
+                    "CustomerName": customer_name,
+                    "CustomerBirth": customer_birth,
+                    "CustomerPassportSeries": customer_passport_series,
+                    "CustomerPassportNumber": customer_passport_number,
+                    "CustomerSignatureDate": customer_signature_date,
+                    "TrancheSigningDate": tranche_signing_date
+                })
 
-        return {
-            'case': case,
-            "file": Path(path_to_file).name,
-            "TrancheNumber": EMPTY_RESULT,
-            "TrancheDate": EMPTY_RESULT,
-            "ParentContractNumber": parent_contract_number,
-            "ParentContractDate": parent_contract_date,
-            "TrancheAmount": tranche_full_amount,
-            "TrancheTerm": tranche_term,
-            "TranchePercent": EMPTY_RESULT,
-            "TrancePercentYear": EMPTY_RESULT,
-            "TrancheFullAmount": tranche_full_amount,
-            "CustomerName": customer_name,
-            "CustomerBirth": customer_birth,
-            "CustomerPassportSeries": customer_passport_series,
-            "CustomerPassportNumber": customer_passport_number,
-            "CustomerSignatureDate": customer_signature_date,
-            "TrancheSigningDate": tranche_signing_date
-        }
+            result.append({
+                "case": 0,
+                "file": file_name,
+                "TrancheNumber": None,
+                "TrancheDate": None,
+                "ParentContractNumber": None,
+                "ParentContractDate": None,
+                "TrancheAmount": None,
+                "TrancheTerm": None,
+                "TranchePercent": None,
+                "TrancePercentYear": None,
+                "TrancheFullAmount": None,
+                "CustomerName": None,
+                "CustomerBirth": None,
+                "CustomerPassportSeries": None,
+                "CustomerPassportNumber": None,
+                "CustomerSignatureDate": None,
+                "TrancheSigningDate": None
+            })
+        except Exception as e:
+            st.error(f'Ошибка разспознавания документа {file_name}')
+            result.append({
+                "case": 0,
+                "file": file_name,
+                "TrancheNumber": None,
+                "TrancheDate": None,
+                "ParentContractNumber": None,
+                "ParentContractDate": None,
+                "TrancheAmount": None,
+                "TrancheTerm": None,
+                "TranchePercent": None,
+                "TrancePercentYear": None,
+                "TrancheFullAmount": None,
+                "CustomerName": None,
+                "CustomerBirth": None,
+                "CustomerPassportSeries": None,
+                "CustomerPassportNumber": None,
+                "CustomerSignatureDate": None,
+                "TrancheSigningDate": None
+            })
 
-    return {
-        'case': 0,
-        "file": Path(path_to_file).name,
-        "TrancheNumber": None,
-        "TrancheDate": None,
-        "ParentContractNumber": None,
-        "ParentContractDate": None,
-        "TrancheAmount": None,
-        "TrancheTerm": None,
-        "TranchePercent": None,
-        "TrancePercentYear": None,
-        "TrancheFullAmount": None,
-        "CustomerName": None,
-        "CustomerBirth": None,
-        "CustomerPassportSeries": None,
-        "CustomerPassportNumber": None,
-        "CustomerSignatureDate": None,
-        "TrancheSigningDate": None
-    }
+    return pd.DataFrame(result).dropna(subset=TRANCHE_STATEMENT_COLS)
 
-
-collected_documents = collect_documents(TRANCHE_PATH)
-# collected_documents = ['/Users/a1234/Desktop/archives/tranche_statement/011490954/011490954_tranche_statement.pdf']
-result = []
-
-for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-    data = collect_tranche_statement_data(doc)
-    result.append(data)
-
-df = pd.DataFrame(result)
-df.to_csv('tranche_statement.csv', index=False)
+# collected_documents = collect_documents(TRANCHE_PATH)
+# # collected_documents = ['/Users/a1234/Desktop/archives/tranche_statement/011490954/011490954_tranche_statement.pdf']
+# result = []
+#
+# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+#     data = collect_tranche_statement_data(doc)
+#     result.append(data)
+#
+# df = pd.DataFrame(result)
+# df.to_csv('tranche_statement.csv', index=False)

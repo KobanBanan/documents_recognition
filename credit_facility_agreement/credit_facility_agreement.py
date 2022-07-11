@@ -1,13 +1,12 @@
 import os
 import re
-from multiprocessing import Pool, cpu_count
 from pathlib import Path
 
 import PyPDF2
 import pandas as pd
 from tqdm.auto import tqdm
 
-CREDIT_FACILITY_AGREEMENT_PATH = '/Users/a1234/Desktop/archives/credit_facility_agreement'
+CREDIT_FACILITY_AGREEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
 
 contract_number_regex = re.compile(r'(?<=№)(.*?)(?= №)')
 loan_amount_regex = re.compile('(?<=)(.*?)(?=коп.)')
@@ -168,237 +167,273 @@ def collect_credit_facility_agreement_data(path_to_file: str):
     creditor_name = None
     order_number = None
     order_date = None
+    credit_limit = None
+    signature_date = None
+    signing_date = None
 
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
+    try:
+        pdf_file_obj = open(path_to_file, 'rb')
+        pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
 
-    num_pages = pdf_reader.numPages
+        num_pages = pdf_reader.numPages
 
-    # Pages
-    first_page_data = pdf_reader.getPage(0).extractText()
-    second_page_data = pdf_reader.getPage(1).extractText()
-    third_page_data = pdf_reader.getPage(2).extractText()
-    six_page_data = pdf_reader.getPage(5).extractText()
-    seven_page_data = pdf_reader.getPage(6).extractText()
-    eight_page_data = pdf_reader.getPage(7).extractText()
-    nine_page_data = pdf_reader.getPage(8).extractText()
+        # Pages
+        first_page_data = pdf_reader.getPage(0).extractText()
+        second_page_data = pdf_reader.getPage(1).extractText()
+        third_page_data = pdf_reader.getPage(2).extractText()
+        six_page_data = pdf_reader.getPage(5).extractText()
+        seven_page_data = pdf_reader.getPage(6).extractText()
+        eight_page_data = pdf_reader.getPage(7).extractText()
+        nine_page_data = pdf_reader.getPage(8).extractText()
 
-    # Permanent data
-    # CreditLimit 10
-    # --------------------------------------------------------------------------------------------------------------
-    credit_limit = extract_credit_limit(first_page_data)
-
-    # Dates 17, 18
-    # --------------------------------------------------------------------------------------------------------------
-    signature_date = extract_signature_date(first_page_data)
-    signing_date = extract_sign_date(first_page_data)
-
-    if num_pages == 9:
-
-        # ContractNumber 1, ContractDate 2
+        # Permanent data
+        # CreditLimit 10
         # --------------------------------------------------------------------------------------------------------------
-        contract_number, contract_date = collect_contract_number_and_date(third_page_data)
+        credit_limit = extract_credit_limit(first_page_data)
 
-        # FIO 3, 4, 5
+        # Dates 17, 18
         # --------------------------------------------------------------------------------------------------------------
-        last, first, middle = extract_name(eight_page_data)
+        signature_date = extract_signature_date(first_page_data)
+        signing_date = extract_sign_date(first_page_data)
 
-        # Birthday 6
-        # --------------------------------------------------------------------------------------------------------------
-        birthday = extract_birthday(eight_page_data)
+        if num_pages == 9:
 
-        # Passport 7, 8
-        # --------------------------------------------------------------------------------------------------------------
-        passport = extract_passport(eight_page_data)
-        series, number = passport
+            # ContractNumber 1, ContractDate 2
+            # --------------------------------------------------------------------------------------------------------------
+            contract_number, contract_date = collect_contract_number_and_date(third_page_data)
 
-        # LoanAmount 9
-        # --------------------------------------------------------------------------------------------------------------
-        loan_amount = extarc_load_amount(second_page_data)
+            # FIO 3, 4, 5
+            # --------------------------------------------------------------------------------------------------------------
+            last, first, middle = extract_name(eight_page_data)
 
-        # Percent 11, 12
-        # --------------------------------------------------------------------------------------------------------------
-        percent_rate = extract_percent_rate(third_page_data)
-        full_amount_percent = extract_full_percent_rate(second_page_data)
+            # Birthday 6
+            # --------------------------------------------------------------------------------------------------------------
+            birthday = extract_birthday(eight_page_data)
 
-        # FullAmountMoney 13
-        # --------------------------------------------------------------------------------------------------------------
-        full_amount_money = loan_amount
+            # Passport 7, 8
+            # --------------------------------------------------------------------------------------------------------------
+            passport = extract_passport(eight_page_data)
+            series, number = passport
 
-        # CreditorName, OrderNumber, OrderDate 15, 16
-        # --------------------------------------------------------------------------------------------------------------
-        creditor_name = None
-        order_number = None
-        order_date = None
+            # LoanAmount 9
+            # --------------------------------------------------------------------------------------------------------------
+            loan_amount = extarc_load_amount(second_page_data)
 
-    elif num_pages in (21, 23, 25, 24, 26, 27, 31, 35, 32, 36,):
+            # Percent 11, 12
+            # --------------------------------------------------------------------------------------------------------------
+            percent_rate = extract_percent_rate(third_page_data)
+            full_amount_percent = extract_full_percent_rate(second_page_data)
 
-        # TODO сделать валидацию
-        if path_to_file == '/Users/a1234/Desktop/archives/credit_facility_agreement/159927763/159927763_credit_facility_agreement.pdf':
-            return {
-                "file": Path(path_to_file).name,
-                "ContractNumber": contract_number,
-                "ContractDate": contract_date,
-                "LastName": last,
-                "FirstName": first,
-                "MiddleName": middle,
-                "BirthDate": birthday,
-                "PassportSeries": series,
-                "PassportNumber": number,
-                "LoanAmount": loan_amount,
-                "CreditLimit": credit_limit,
-                "PercentRate": percent_rate,
-                "FullAmountPercent": full_amount_percent,
-                "FullAmountMoney": full_amount_money,
-                "CreditorName": creditor_name,
-                "OrderNumber": order_number,
-                "OrderDate": order_date,
-                "SignatureDate": signature_date,
-                "SigningDate": signing_date,
+            # FullAmountMoney 13
+            # --------------------------------------------------------------------------------------------------------------
+            full_amount_money = loan_amount
+
+            # CreditorName, OrderNumber, OrderDate 15, 16
+            # --------------------------------------------------------------------------------------------------------------
+            creditor_name = None
+            order_number = None
+            order_date = None
+
+        elif num_pages in (21, 23, 25, 24, 26, 27, 31, 35, 32, 36,):
+
+            # TODO сделать валидацию
+            if path_to_file == '/Users/a1234/Desktop/archives/credit_facility_agreement/159927763/159927763_credit_facility_agreement.pdf':
+                return {
+                    "file": Path(path_to_file).name,
+                    "ContractNumber": contract_number,
+                    "ContractDate": contract_date,
+                    "LastName": last,
+                    "FirstName": first,
+                    "MiddleName": middle,
+                    "BirthDate": birthday,
+                    "PassportSeries": series,
+                    "PassportNumber": number,
+                    "LoanAmount": loan_amount,
+                    "CreditLimit": credit_limit,
+                    "PercentRate": percent_rate,
+                    "FullAmountPercent": full_amount_percent,
+                    "FullAmountMoney": full_amount_money,
+                    "CreditorName": creditor_name,
+                    "OrderNumber": order_number,
+                    "OrderDate": order_date,
+                    "SignatureDate": signature_date,
+                    "SigningDate": signing_date,
+                }
+
+            twenty_one_page_data = pdf_reader.getPage(20).extractText()
+
+            mapping = {
+                21: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': "",
+                    'order_date': twenty_one_page_data
+                },
+                23: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': "",
+                    'order_date': twenty_one_page_data
+                },
+                24: {
+                    'creditor_name': seven_page_data.replace('\n', ''),
+                    'order_number': seven_page_data.replace('\n', ''),
+                    'order_date': seven_page_data.replace('\n', '')
+                },
+                25: {
+                    'creditor_name': seven_page_data.replace('\n', ''),
+                    'order_number': seven_page_data.replace('\n', ''),
+                    'order_date': seven_page_data.replace('\n', '')
+                },
+                26: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': eight_page_data.replace('\n', ''),
+                    'order_date': eight_page_data.replace('\n', '')
+                },
+                27: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': eight_page_data.replace('\n', ''),
+                    'order_date': eight_page_data.replace('\n', '')
+                },
+                31: {
+                    'creditor_name': seven_page_data.replace('\n', ''),
+                    'order_number': seven_page_data.replace('\n', ''),
+                    'order_date': seven_page_data.replace('\n', '')
+                },
+                32: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': eight_page_data.replace('\n', ''),
+                    'order_date': eight_page_data.replace('\n', '')
+                },
+                35: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': eight_page_data.replace('\n', ''),
+                    'order_date': eight_page_data.replace('\n', '')
+                },
+                36: {
+                    'creditor_name': eight_page_data.replace('\n', ''),
+                    'order_number': eight_page_data.replace('\n', ''),
+                    'order_date': eight_page_data.replace('\n', '')
+                },
             }
 
-        twenty_one_page_data = pdf_reader.getPage(20).extractText()
+            # ContractNumber 1, ContractDate 2
+            # --------------------------------------------------------------------------------------------------------------
+            contract_number, contract_date = (
+                extract(second_page_data, contract_number_contract_date_1),
+                extract(second_page_data.replace('\n', ""), contract_number_contract_date_2) or
+                extract(second_page_data.replace('\n', ""), contract_number_contract_date_3)
+            )
 
-        mapping = {
-            21: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': "",
-                'order_date': twenty_one_page_data
-            },
-            23: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': "",
-                'order_date': twenty_one_page_data
-            },
-            24: {
-                'creditor_name': seven_page_data.replace('\n', ''),
-                'order_number': seven_page_data.replace('\n', ''),
-                'order_date': seven_page_data.replace('\n', '')
-            },
-            25: {
-                'creditor_name': seven_page_data.replace('\n', ''),
-                'order_number': seven_page_data.replace('\n', ''),
-                'order_date': seven_page_data.replace('\n', '')
-            },
-            26: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': eight_page_data.replace('\n', ''),
-                'order_date': eight_page_data.replace('\n', '')
-            },
-            27: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': eight_page_data.replace('\n', ''),
-                'order_date': eight_page_data.replace('\n', '')
-            },
-            31: {
-                'creditor_name': seven_page_data.replace('\n', ''),
-                'order_number': seven_page_data.replace('\n', ''),
-                'order_date': seven_page_data.replace('\n', '')
-            },
-            32: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': eight_page_data.replace('\n', ''),
-                'order_date': eight_page_data.replace('\n', '')
-            },
-            35: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': eight_page_data.replace('\n', ''),
-                'order_date': eight_page_data.replace('\n', '')
-            },
-            36: {
-                'creditor_name': eight_page_data.replace('\n', ''),
-                'order_number': eight_page_data.replace('\n', ''),
-                'order_date': eight_page_data.replace('\n', '')
-            },
+            # FIO 3, 4, 5
+            # --------------------------------------------------------------------------------------------------------------
+            fio = (
+                    extract(six_page_data, fio_1) or
+                    extract(nine_page_data, fio_1) or
+                    extract(seven_page_data, fio_1)
+            )
+            try:
+                last, first, middle = fio.split(" ")
+            except ValueError:
+                last, first, middle = None, None, None
+
+            # Birthday 6
+            # --------------------------------------------------------------------------------------------------------------
+            birthday = extract_birthday(six_page_data) or extract_birthday(seven_page_data)
+
+            # Passport 7, 8
+            # --------------------------------------------------------------------------------------------------------------
+            passport = (
+                    extract_passport(six_page_data) or extract_passport(nine_page_data) or extract_passport(
+                seven_page_data)
+            )
+            series, number = passport
+
+            # LoanAmount 9
+            # --------------------------------------------------------------------------------------------------------------
+            loan_amount = extarc_load_amount(second_page_data)
+
+            # Percent 11, 12
+            # --------------------------------------------------------------------------------------------------------------
+            percent_rate = extract_percent_rate(third_page_data.replace('\n', ' '))
+            full_amount_percent = (
+                    extract_full_percent_rate(second_page_data) or
+                    extract(second_page_data.replace("\n", " "), full_amount_percent_1)
+            )
+
+            # FullAmountMoney 13
+            # --------------------------------------------------------------------------------------------------------------
+            full_amount_money = loan_amount
+
+            # CreditorName, OrderNumber, OrderDate 14, 15, 16
+            # --------------------------------------------------------------------------------------------------------------
+            creditor_name = (
+                    extract_creditor_name(mapping[num_pages]['creditor_name']) or
+                    extract(mapping[num_pages]['creditor_name'], creditor_name_1)
+            )
+            order_number = extract_order_number(mapping[num_pages]['order_number'])
+            order_date = (
+                    extract_order_date(mapping[num_pages]['order_date']) or
+                    extract(mapping[num_pages]['order_date'], order_date_1)
+            )
+        return {
+            "file": Path(path_to_file).name,
+            "ContractNumber": contract_number,
+            "ContractDate": contract_date,
+            "LastName": last,
+            "FirstName": first,
+            "MiddleName": middle,
+            "BirthDate": birthday,
+            "PassportSeries": series,
+            "PassportNumber": number,
+            "LoanAmount": loan_amount,
+            "CreditLimit": credit_limit,
+            "PercentRate": percent_rate,
+            "FullAmountPercent": full_amount_percent,
+            "FullAmountMoney": full_amount_money,
+            "CreditorName": creditor_name,
+            "OrderNumber": order_number,
+            "OrderDate": order_date,
+            "SignatureDate": signature_date,
+            "SigningDate": signing_date,
+        }
+    except Exception as e:
+
+        return {
+            "file": Path(path_to_file).name,
+            "ContractNumber": contract_number,
+            "ContractDate": contract_date,
+            "LastName": last,
+            "FirstName": first,
+            "MiddleName": middle,
+            "BirthDate": birthday,
+            "PassportSeries": series,
+            "PassportNumber": number,
+            "LoanAmount": loan_amount,
+            "CreditLimit": credit_limit,
+            "PercentRate": percent_rate,
+            "FullAmountPercent": full_amount_percent,
+            "FullAmountMoney": full_amount_money,
+            "CreditorName": creditor_name,
+            "OrderNumber": order_number,
+            "OrderDate": order_date,
+            "SignatureDate": signature_date,
+            "SigningDate": signing_date,
         }
 
-        # ContractNumber 1, ContractDate 2
-        # --------------------------------------------------------------------------------------------------------------
-        contract_number, contract_date = (
-            extract(second_page_data, contract_number_contract_date_1),
-            extract(second_page_data.replace('\n', ""), contract_number_contract_date_2) or
-            extract(second_page_data.replace('\n', ""), contract_number_contract_date_3)
-        )
 
-        # FIO 3, 4, 5
-        # --------------------------------------------------------------------------------------------------------------
-        fio = (
-                extract(six_page_data, fio_1) or
-                extract(nine_page_data, fio_1) or
-                extract(seven_page_data, fio_1)
-        )
-        try:
-            last, first, middle = fio.split(" ")
-        except ValueError:
-            last, first, middle = None, None, None
+# if __name__ == '__main__':
+#     collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)[:100]
+#     result = []
+#     with Pool(cpu_count()) as p:
+#         r = tqdm(p.imap(collect_credit_facility_agreement_data, collected_documents), total=len(collected_documents))
+#
+#     df = pd.DataFrame(list(r))
+#     df.to_csv('credit_facility_agreement.csv', index=False)
 
-        # Birthday 6
-        # --------------------------------------------------------------------------------------------------------------
-        birthday = extract_birthday(six_page_data) or extract_birthday(seven_page_data)
+result = []
+collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)
+for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+    data = collect_credit_facility_agreement_data(doc)
+    result.append(data)
 
-        # Passport 7, 8
-        # --------------------------------------------------------------------------------------------------------------
-        passport = (
-                extract_passport(six_page_data) or extract_passport(nine_page_data) or extract_passport(seven_page_data)
-        )
-        series, number = passport
-
-        # LoanAmount 9
-        # --------------------------------------------------------------------------------------------------------------
-        loan_amount = extarc_load_amount(second_page_data)
-
-        # Percent 11, 12
-        # --------------------------------------------------------------------------------------------------------------
-        percent_rate = extract_percent_rate(third_page_data.replace('\n', ' '))
-        full_amount_percent = (
-                extract_full_percent_rate(second_page_data) or
-                extract(second_page_data.replace("\n", " "), full_amount_percent_1)
-        )
-
-        # FullAmountMoney 13
-        # --------------------------------------------------------------------------------------------------------------
-        full_amount_money = loan_amount
-
-        # CreditorName, OrderNumber, OrderDate 14, 15, 16
-        # --------------------------------------------------------------------------------------------------------------
-        creditor_name = (
-                extract_creditor_name(mapping[num_pages]['creditor_name']) or
-                extract(mapping[num_pages]['creditor_name'], creditor_name_1)
-        )
-        order_number = extract_order_number(mapping[num_pages]['order_number'])
-        order_date = (
-                extract_order_date(mapping[num_pages]['order_date']) or
-                extract(mapping[num_pages]['order_date'], order_date_1)
-        )
-
-    return {
-        "file": Path(path_to_file).name,
-        "ContractNumber": contract_number,
-        "ContractDate": contract_date,
-        "LastName": last,
-        "FirstName": first,
-        "MiddleName": middle,
-        "BirthDate": birthday,
-        "PassportSeries": series,
-        "PassportNumber": number,
-        "LoanAmount": loan_amount,
-        "CreditLimit": credit_limit,
-        "PercentRate": percent_rate,
-        "FullAmountPercent": full_amount_percent,
-        "FullAmountMoney": full_amount_money,
-        "CreditorName": creditor_name,
-        "OrderNumber": order_number,
-        "OrderDate": order_date,
-        "SignatureDate": signature_date,
-        "SigningDate": signing_date,
-    }
-
-
-if __name__ == '__main__':
-    collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)[:100]
-    result = []
-    with Pool(cpu_count()) as p:
-        r = tqdm(p.imap(collect_credit_facility_agreement_data, collected_documents), total=len(collected_documents))
-
-    df = pd.DataFrame(list(r))
-    df.to_csv('credit_facility_agreement_1.csv', index=False)
+df = pd.DataFrame(list(result))
+df.to_csv('credit_facility_agreement.csv', index=False)

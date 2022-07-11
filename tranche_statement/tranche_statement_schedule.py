@@ -1,13 +1,19 @@
 import os
 import pathlib
 import re
-from pathlib import Path
+from typing import Dict
 
 import PyPDF2
 import pandas as pd
-from tqdm.auto import tqdm
+import streamlit as st
+from stqdm import stqdm
 
-TRANCHE_PATH = '/Users/a1234/Desktop/archives/tranche_statement'
+# TRANCHE_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
+TRANCHE_STATEMENT_SCHEDULE_COLS = [
+    "HasPaymentSchedule",
+    "PaymentScheduleDate",
+    "PaymentScheduleMainDebtAmount"
+]
 
 
 def extract_has_payment_schedule(s):
@@ -45,36 +51,45 @@ def collect_documents(directory):
     return docs
 
 
-def collect_tranche_statement_data(path_to_file: str):
+def collect_tranche_statement_schedule_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     """
 
-    :param path_to_file:
+    :param pdf_dict:
     :return:
     """
+    result = []
+    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+        try:
+            num_pages = range(pdf_reader.numPages)
 
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
+            first_page_data = pdf_reader.getPage(0).extractText()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
 
-    num_pages = range(pdf_reader.numPages)
+            result.append({
+                "file": file_name,
+                "HasPaymentSchedule": extract_has_payment_schedule(first_page_data),
+                "PaymentScheduleDate": extract_payment_schedule_date(last_page_data.replace('\n', '')),
+                "PaymentScheduleMainDebtAmount": extract_payment_schedule_main_debt_amount(last_page_data)
+            })
+        except Exception as e:
+            st.error(f'Ошибка разспознавания документа {file_name}')
+            result.append({
+                "file": file_name,
+                "HasPaymentSchedule": None,
+                "PaymentScheduleDate": None,
+                "PaymentScheduleMainDebtAmount": None
+            })
 
-    first_page_data = pdf_reader.getPage(0).extractText()
-    last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+    return pd.DataFrame(result).dropna(subset=TRANCHE_STATEMENT_SCHEDULE_COLS)
 
-    return {
-        "file": Path(path_to_file).name,
-        "HasPaymentSchedule": extract_has_payment_schedule(first_page_data),
-        "PaymentScheduleDate": extract_payment_schedule_date(last_page_data.replace('\n', '')),
-        "PaymentScheduleMainDebtAmount": extract_payment_schedule_main_debt_amount(last_page_data)
-    }
-
-
-collected_documents = collect_documents(TRANCHE_PATH)
-# collected_documents = ['/Users/a1234/Desktop/ocr/Revo3/tranche_statement/000062273/000062273_tranche_statement.pdf']
-result = []
-
-for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-    data = collect_tranche_statement_data(doc)
-    result.append(data)
-
-df = pd.DataFrame(result)
-df.to_csv('tranche_statement_schedule.csv', index=False)
+#
+# collected_documents = collect_documents(TRANCHE_PATH)
+# # collected_documents = ['/Users/a1234/Desktop/ocr/Revo3/tranche_statement/000062273/000062273_tranche_statement.pdf']
+# result = []
+#
+# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+#     data = collect_tranche_statement_data(doc)
+#     result.append(data)
+#
+# df = pd.DataFrame(result)
+# df.to_csv('tranche_statement_schedule.csv', index=False)

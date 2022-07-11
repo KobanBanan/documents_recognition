@@ -1,19 +1,20 @@
 import os
 import pathlib
 import re
-from pathlib import Path
+from typing import Dict
 
 import PyPDF2
 import pandas as pd
-from tqdm.auto import tqdm
+import streamlit as st
+from stqdm import stqdm
 
-FIELDS = [
+ASP_FIELDS = [
     "DocName",
     "CreditorName",
     "AcceptDate"
 ]
 
-ASP_PATH = '/Users/a1234/Desktop/archives/asp'
+# ASP_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
 acceptance_date_regex = re.compile(r"\s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*")
 creditor_name_regex = (
     re.compile(r'(?<=предложением)(.*)(?= заключить)'),
@@ -35,33 +36,46 @@ def collect_documents(directory):
     return docs
 
 
-def collect_data(path_to_file: str):
+def collect_asp_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     """
-
-    :param path_to_file:
+    :param pdf_dict:
     :return:
     """
+    result = []
 
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
+    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+        try:
+            num_pages = range(pdf_reader.numPages)
 
-    num_pages = range(pdf_reader.numPages)
+            first_page_data = pdf_reader.getPage(0).extractText()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
 
-    first_page_data = pdf_reader.getPage(0).extractText()
-    last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+            doc_name = extract_doc_name(first_page_data)
+            creditor_name = extract_creditor_name(first_page_data)
 
-    doc_name = extract_doc_name(first_page_data)
-    creditor_name = extract_creditor_name(first_page_data)
+            accept_date = extract_accept_date(last_page_data)
 
-    accept_date = extract_accept_date(last_page_data)
+            result.append(
+                {
+                    "file": file_name,
+                    "DocName": doc_name,
+                    "CreditorName": creditor_name,
+                    "AcceptDate": accept_date
 
-    return {
-        "file": Path(path_to_file).name,
-        "DocName": doc_name,
-        "CreditorName": creditor_name,
-        "AcceptDate": accept_date
+                }
+            )
+        except:
+            st.error(f'Ошибка разспознавания документа {file_name}')
+            result.append(
+                {
+                    "file": None,
+                    "DocName": None,
+                    "CreditorName": None,
+                    "AcceptDate": None
 
-    }
+                }
+            )
+    return pd.DataFrame(result).dropna(subset=ASP_FIELDS)
 
 
 def extract_doc_name(s):
@@ -69,10 +83,6 @@ def extract_doc_name(s):
         match = re.search(pattern, s.replace("\n", ""))
         if match:
             return match.group()
-
-
-def extract_date(s):
-    pass
 
 
 def extract_creditor_name(s):
@@ -87,14 +97,13 @@ def extract_accept_date(s):
     if match:
         return ".".join(match.groups())
 
-
-collected_documents = collect_documents(ASP_PATH)
-
-result = []
-
-for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-    data = collect_data(doc)
-    result.append(data)
-
-df = pd.DataFrame(result)
-df.to_csv('asp.csv', index=False)
+# collected_documents = collect_documents(ASP_PATH)
+#
+# result = []
+#
+# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+#     data = collect_data(doc)
+#     result.append(data)
+#
+# df = pd.DataFrame(result)
+# df.to_csv('asp.csv', index=False)

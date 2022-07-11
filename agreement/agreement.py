@@ -1,13 +1,22 @@
 import os
 import pathlib
 import re
-from pathlib import Path
+from typing import Dict
 
 import PyPDF2
 import pandas as pd
-from tqdm.auto import tqdm
+import streamlit as st
+from stqdm import stqdm
 
-AGREEMENT_PATH = '/Users/a1234/Desktop/archives/agreement'
+# AGREEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
+AGREEMENT_COLS = [
+    "LastName",
+    "FirstName",
+    "MiddleName",
+    "PassportSeries",
+    "PassportNumber",
+    "SigningDate"
+]
 
 
 def collect_documents(directory):
@@ -20,41 +29,54 @@ def collect_documents(directory):
     return docs
 
 
-def collect_agreement_data(path_to_file: str):
+def collect_agreement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     """
-
-    :param path_to_file:
+    :param pdf_dict:
     :return:
     """
+    result = []
 
-    pdf_file_obj = open(path_to_file, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj, strict=False)
+    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+        try:
+            num_pages = range(pdf_reader.numPages)
 
-    num_pages = range(pdf_reader.numPages)
+            first_page_data = pdf_reader.getPage(0).extractText()
 
-    first_page_data = pdf_reader.getPage(0).extractText()
+            last_page = pdf_reader.getPage(num_pages[-1])
+            last_page_data = last_page.extractText()
 
-    last_page = pdf_reader.getPage(num_pages[-1])
-    last_page_data = last_page.extractText()
+            # extract_data from first page
 
-    # extract_data from first page
+            name = extract_name(first_page_data)
+            name = [n for n in name.split(" ") if n]
+            last, first, middle = (name[0], name[1], " ".join(name[2:])) if name else (None, None, None)
 
-    name = extract_name(first_page_data)
-    name = [n for n in name.split(" ") if n]
-    last, first, middle = (name[0], name[1], " ".join(name[2:])) if name else (None, None, None)
+            series, number = extract_passport(first_page_data)
+            date = extract_date(last_page_data)
 
-    series, number = extract_passport(first_page_data)
-    date = extract_date(last_page_data)
+            result.append({
+                "file": file_name,
+                "LastName": last,
+                "FirstName": first,
+                "MiddleName": middle,
+                "PassportSeries": series,
+                "PassportNumber": number,
+                "SigningDate": date
+            })
 
-    return {
-        "file": Path(path_to_file).name,
-        "LastName": last,
-        "FirstName": first,
-        "MiddleName": middle,
-        "PassportSeries": series,
-        "PassportNumber": number,
-        "SigningDate": date
-    }
+        except Exception as e:
+            st.error(f'Ошибка разспознавания документа {file_name}')
+            result.append({
+                "file": file_name,
+                "LastName": None,
+                "FirstName": None,
+                "MiddleName": None,
+                "PassportSeries": None,
+                "PassportNumber": None,
+                "SigningDate": None
+            })
+
+    return pd.DataFrame(result).dropna(subset=AGREEMENT_COLS)
 
 
 def extract_passport(s):
@@ -92,14 +114,13 @@ def extract_name(s):
 
     return ""
 
-
-collected_documents = collect_documents(AGREEMENT_PATH)
-
-result = []
-
-for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-    data = collect_agreement_data(doc)
-    result.append(data)
-
-df = pd.DataFrame(result)
-df.to_csv('agreement.csv', index=False)
+# collected_documents = collect_documents(AGREEMENT_PATH)
+#
+# result = []
+#
+# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
+#     data = collect_agreement_data(doc)
+#     result.append(data)
+#
+# df = pd.DataFrame(result)
+# df.to_csv('agreement.csv', index=False)
