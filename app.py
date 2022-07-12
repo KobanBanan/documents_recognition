@@ -9,7 +9,7 @@ from agreement.agreement import collect_agreement_data
 from asp.asp import collect_asp_data
 from statement.statement import collect_statement_data
 from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
-
+from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -45,7 +45,7 @@ def main():
     uploaded_zip = st.file_uploader('XML File', type="zip")
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
-        recognize_btn = st.button("Распазнать документы")
+        recognize_btn = st.button("Распознать документы")
         if recognize_btn:
             pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = {
                 file.filename:
@@ -80,7 +80,7 @@ def main():
                     key='download-csv'
                 )
 
-            with st.spinner('Распознавание документов "Согласие на обработку персональных данных и обязательства..'):
+            with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
                 statement_data = collect_statement_data(pdf_corpus)
                 st.dataframe(statement_data)
                 statement_download = convert_df(statement_data)
@@ -88,6 +88,18 @@ def main():
                     "Скачать statement.csv",
                     statement_download,
                     "statement.csv",
+                    "text/csv",
+                    key='download-csv'
+                )
+
+            with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
+                credit_facility_agreement_data = collect_credit_facility_agreement_data(pdf_corpus)
+                st.dataframe(credit_facility_agreement_data)
+                credit_facility_agreement_download = convert_df(credit_facility_agreement_data)
+                st.download_button(
+                    "Скачать credit_facility_agreement.csv",
+                    credit_facility_agreement_download,
+                    "credit_facility_agreement_data.csv",
                     "text/csv",
                     key='download-csv'
                 )

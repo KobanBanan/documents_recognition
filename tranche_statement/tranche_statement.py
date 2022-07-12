@@ -405,7 +405,7 @@ def collect_tranche_statement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
                 "TrancheSigningDate": None
             })
 
-    return pd.DataFrame(result).dropna(subset=TRANCHE_STATEMENT_COLS)
+    return pd.DataFrame(result).dropna(subset=TRANCHE_STATEMENT_COLS, how='all')
 
 # collected_documents = collect_documents(TRANCHE_PATH)
 # # collected_documents = ['/Users/a1234/Desktop/archives/tranche_statement/011490954/011490954_tranche_statement.pdf']

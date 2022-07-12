@@ -76,7 +76,7 @@ def collect_agreement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
                 "SigningDate": None
             })
 
-    return pd.DataFrame(result).dropna(subset=AGREEMENT_COLS)
+    return pd.DataFrame(result).dropna(subset=AGREEMENT_COLS, how='all')
 
 
 def extract_passport(s):

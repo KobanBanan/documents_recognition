@@ -75,7 +75,7 @@ def collect_asp_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
 
                 }
             )
-    return pd.DataFrame(result).dropna(subset=ASP_FIELDS)
+    return pd.DataFrame(result).dropna(subset=ASP_FIELDS, how='all')
 
 
 def extract_doc_name(s):
