@@ -1,7 +1,7 @@
 import os
 import pathlib
 import re
-from typing import Dict
+from typing import Dict, List
 
 import PyPDF2
 import pandas as pd
@@ -86,14 +86,15 @@ def collect_documents(directory):
     return docs
 
 
-def collect_statement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
+def collect_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
 
     :param pdf_dict:
     :return:
     """
     result = []
-    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+    for file, _ in zip(pdf_dict, stqdm(range(len(pdf_dict)))):
+        file_name, pdf_reader = file.get('file_name'), file.get('pdf_reader')
         try:
             num_pages = range(pdf_reader.numPages)
             first_page_data = pdf_reader.getPage(0).extractText()

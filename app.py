@@ -7,9 +7,11 @@ import streamlit as st
 
 from agreement.agreement import collect_agreement_data
 from asp.asp import collect_asp_data
+from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
+from document_classification import classify_documents
 from statement.statement import collect_statement_data
 from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
-from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
+
 hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}
@@ -40,24 +42,27 @@ def main():
             """
         )
 
-    st.sidebar.header('Test')
-
     uploaded_zip = st.file_uploader('XML File', type="zip")
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
+        pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = {
+            file.filename:
+                PyPDF2.PdfFileReader(BytesIO(zf.read(file))) for file in zf.filelist if
+            file.filename.endswith('.pdf')
+        }
+
         recognize_btn = st.button("Распознать документы")
         if recognize_btn:
-            pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = {
-                file.filename:
-                    PyPDF2.PdfFileReader(BytesIO(zf.read(file))) for file in zf.filelist if
-                file.filename.endswith('.pdf')
-            }
 
-            if not pdf_corpus:
-                return
+            with st.spinner('Классификация документов..'):
+                classified_documents = classify_documents(pdf_corpus)
 
-            with st.spinner('Распознавание документов "Соглашения об использовании Аналога собственноручной подписи..'):
-                asp_data = collect_asp_data(pdf_corpus)
+            with st.expander('Классифицированные документы'):
+                st.write({k: [x.get('file_name') for x in v] for k, v in classified_documents.items()})
+
+            with st.spinner(
+                    'Распознавание документов "Соглашения об использовании Аналога собственноручной подписи..'):
+                asp_data = collect_asp_data(classified_documents['asp'])
                 st.dataframe(asp_data)
                 asp_download = convert_df(asp_data)
                 st.download_button(
@@ -68,8 +73,9 @@ def main():
                     key='download-csv'
                 )
 
-            with st.spinner('Распознавание документов "Согласие на обработку персональных данных и обязательства..'):
-                agreement_data = collect_agreement_data(pdf_corpus)
+            with st.spinner(
+                    'Распознавание документов "Согласие на обработку персональных данных и обязательства..'):
+                agreement_data = collect_agreement_data(classified_documents['agreement'])
                 st.dataframe(agreement_data)
                 agreement_download = convert_df(agreement_data)
                 st.download_button(
@@ -81,7 +87,7 @@ def main():
                 )
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
-                statement_data = collect_statement_data(pdf_corpus)
+                statement_data = collect_statement_data(classified_documents['statement'])
                 st.dataframe(statement_data)
                 statement_download = convert_df(statement_data)
                 st.download_button(
@@ -93,7 +99,9 @@ def main():
                 )
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
-                credit_facility_agreement_data = collect_credit_facility_agreement_data(pdf_corpus)
+                credit_facility_agreement_data = collect_credit_facility_agreement_data(
+                    classified_documents['credit_facility_agreement']
+                )
                 st.dataframe(credit_facility_agreement_data)
                 credit_facility_agreement_download = convert_df(credit_facility_agreement_data)
                 st.download_button(
@@ -105,7 +113,9 @@ def main():
                 )
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
-                tranche_statement_schedule_data = collect_tranche_statement_schedule_data(pdf_corpus)
+                tranche_statement_schedule_data = collect_tranche_statement_schedule_data(
+                    classified_documents['tranche_statement']
+                )
                 st.dataframe(tranche_statement_schedule_data)
                 tranche_statement_schedule_download = convert_df(tranche_statement_schedule_data)
                 st.download_button(
@@ -117,7 +127,7 @@ def main():
                 )
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
-                tranche_statement_data = collect_tranche_statement_data(pdf_corpus)
+                tranche_statement_data = collect_tranche_statement_data(classified_documents['tranche_statement'])
                 st.dataframe(tranche_statement_data)
                 tranche_statement_download = convert_df(tranche_statement_data)
                 st.download_button(

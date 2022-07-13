@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 
 import PyPDF2
 import pandas as pd
@@ -167,7 +167,7 @@ def extract_order_date(s):
         return match.group().strip()
 
 
-def collect_credit_facility_agreement_data(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
+def collect_credit_facility_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
 
     :param pdf_dict:
@@ -193,7 +193,8 @@ def collect_credit_facility_agreement_data(pdf_dict: Dict[str, PyPDF2.PdfFileRea
     signing_date = None
 
     result = []
-    for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+    for file, _ in zip(pdf_dict, stqdm(range(len(pdf_dict)))):
+        file_name, pdf_reader = file.get('file_name'), file.get('pdf_reader')
         try:
             num_pages = pdf_reader.numPages
 
