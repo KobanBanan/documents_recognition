@@ -28,6 +28,13 @@ TRANCHE_STATEMENT_COLS = [
     "TrancheSigningDate"
 ]
 
+UNKNOWN_CASE = 0
+CASE_ONE = 1
+CASE_TWO = 2
+CASE_THREE = 3
+
+ALL_CASES = [CASE_ONE, CASE_TWO, CASE_THREE]
+
 
 def collect_documents(directory):
     docs = []
@@ -196,15 +203,17 @@ def get_case(s):
 
     # case 3 - нет номера транша, только номер займа
     if not tranche_number:
-        return 3
+        return CASE_THREE
 
     # case 2 - есть дата транша и номер транша
     elif tranche_number and tranche_date:
-        return 2
+        return CASE_TWO
 
     # case 1 - есть номер транша но нет даты транша
     elif tranche_number and not tranche_date:
-        return 1
+        return CASE_ONE
+
+    return UNKNOWN_CASE
 
 
 def collect_tranche_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
@@ -228,7 +237,7 @@ def collect_tranche_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader
 
             case = get_case(first_page_data)
 
-            if case == 1:
+            if case == CASE_ONE:
                 # case 2
                 # --------------------------------------------------------------------------------------------------------------
                 tranche_number = extract(first_page_data.replace('\n', ' '), r'(?<=Транш № )(.*?)(?=Договор)')
@@ -267,7 +276,7 @@ def collect_tranche_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader
                     "TrancheSigningDate": tranche_signing_date
                 })
 
-            if case == 2:
+            if case == CASE_TWO:
                 # case 2
                 # --------------------------------------------------------------------------------------------------------------
 
@@ -329,7 +338,7 @@ def collect_tranche_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader
                     "TrancheSigningDate": tranche_signing_date
                 })
 
-            if case == 3:
+            if case == CASE_THREE:
                 # case 3
                 # --------------------------------------------------------------------------------------------------------------
                 tranche_full_amount = extract_tranche_full_amount(first_page_data.replace('\n', '').replace(')', ''))
@@ -364,26 +373,26 @@ def collect_tranche_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader
                     "CustomerSignatureDate": customer_signature_date,
                     "TrancheSigningDate": tranche_signing_date
                 })
-
-            result.append({
-                "case": 0,
-                "file": file_name,
-                "TrancheNumber": None,
-                "TrancheDate": None,
-                "ParentContractNumber": None,
-                "ParentContractDate": None,
-                "TrancheAmount": None,
-                "TrancheTerm": None,
-                "TranchePercent": None,
-                "TrancePercentYear": None,
-                "TrancheFullAmount": None,
-                "CustomerName": None,
-                "CustomerBirth": None,
-                "CustomerPassportSeries": None,
-                "CustomerPassportNumber": None,
-                "CustomerSignatureDate": None,
-                "TrancheSigningDate": None
-            })
+            if case == UNKNOWN_CASE:
+                result.append({
+                    "case": 0,
+                    "file": file_name,
+                    "TrancheNumber": None,
+                    "TrancheDate": None,
+                    "ParentContractNumber": None,
+                    "ParentContractDate": None,
+                    "TrancheAmount": None,
+                    "TrancheTerm": None,
+                    "TranchePercent": None,
+                    "TrancePercentYear": None,
+                    "TrancheFullAmount": None,
+                    "CustomerName": None,
+                    "CustomerBirth": None,
+                    "CustomerPassportSeries": None,
+                    "CustomerPassportNumber": None,
+                    "CustomerSignatureDate": None,
+                    "TrancheSigningDate": None
+                })
         except Exception as e:
             st.error(f'Ошибка разспознавания документа {file_name}')
             result.append({

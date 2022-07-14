@@ -22,13 +22,11 @@ STATEMENT_COLS = [
 
 # STATEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
 
-# TODO оч плохо
-def extarc_load_amount(f):
-    loan = f.splitlines()[3]
-    if loan:
-        loan = ("".join([i for i in loan if i.isdigit()]))
-        if loan:
-            return int(loan)
+def extarc_load_amount(s):
+    pattern = '(?<=Сумма займа: )(.*?)(?= руб.)'
+    match = re.search(pattern, s)
+    if match:
+        return match.groups()
 
 
 def extarc_birthday(s):

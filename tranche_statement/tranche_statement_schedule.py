@@ -65,7 +65,6 @@ def collect_tranche_statement_schedule_data(pdf_dict: List[Dict[str, PyPDF2.PdfF
 
             first_page_data = pdf_reader.getPage(0).extractText()
             last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
-
             result.append({
                 "file": file_name,
                 "HasPaymentSchedule": extract_has_payment_schedule(first_page_data),
