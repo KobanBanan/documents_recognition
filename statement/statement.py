@@ -141,7 +141,7 @@ def collect_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
                     "SigningDate": None
                 }
             )
-    return pd.DataFrame(result).dropna(subset=STATEMENT_COLS, how='all')
+    return pd.DataFrame(result)
 
 # collected_documents = collect_documents(STATEMENT_PATH)
 #

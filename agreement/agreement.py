@@ -29,6 +29,42 @@ def collect_documents(directory):
     return docs
 
 
+def extract_passport(s):
+    """
+    Extract passport by mask
+    :param s:
+    :return:
+    """
+    match = re.search(r"паспорт (\d{4})\s*-?\s*(\d{6})", s)
+    if match:
+        res = match.groups()
+        return res[0].strip(), res[1].strip()
+
+    return None, None
+
+
+def extract_date(s):
+    match = re.search(
+        r"Дата подписания: \s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$", s
+    )
+
+    if match:
+        return ".".join(match.groups())
+
+
+def extract_name(s):
+    patterns = [
+        r"(?<=Я)(.*)(?= \(паспорт)",
+        r'(?<=Я,)(.*)(?= даю свое согласие)'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, s)
+        if match:
+            return match.group().replace(',', '').strip()
+
+    return ""
+
+
 def collect_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
     :param pdf_dict:
@@ -37,8 +73,8 @@ def collect_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     result = []
 
     for file, _ in zip(pdf_dict, stqdm(range(len(pdf_dict)))):
+        file_name, pdf_reader = file.get('file_name'), file.get('pdf_reader')
         try:
-            file_name, pdf_reader = file.get('file_name'), file.get('pdf_reader')
             num_pages = range(pdf_reader.numPages)
 
             first_page_data = pdf_reader.getPage(0).extractText()
@@ -77,43 +113,7 @@ def collect_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
                 "SigningDate": None
             })
 
-    return pd.DataFrame(result).dropna(subset=AGREEMENT_COLS, how='all')
-
-
-def extract_passport(s):
-    """
-    Extract passport by mask
-    :param s:
-    :return:
-    """
-    match = re.search(r"паспорт (\d{4})\s*-?\s*(\d{6})", s)
-    if match:
-        res = match.groups()
-        return res[0].strip(), res[1].strip()
-
-    return None, None
-
-
-def extract_date(s):
-    match = re.search(
-        r"Дата подписания: \s*(3[01]|[12][0-9]|0?[1-9])\.(1[012]|0?[1-9])\.((?:19|20)\d{2})\s*$", s
-    )
-
-    if match:
-        return ".".join(match.groups())
-
-
-def extract_name(s):
-    patterns = [
-        r"(?<=Я)(.*)(?= \(паспорт)",
-        r'(?<=Я,)(.*)(?= даю свое согласие)'
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, s)
-        if match:
-            return match.group().replace(',', '').strip()
-
-    return ""
+    return pd.DataFrame(result)
 
 # collected_documents = collect_documents(AGREEMENT_PATH)
 #

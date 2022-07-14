@@ -416,7 +416,7 @@ def collect_credit_facility_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFi
                 "SigningDate": signing_date,
             })
 
-    return pd.DataFrame(result).dropna(subset=CREDIT_FACILITY_AGREEMENT_COLS, how='all')
+    return pd.DataFrame(result)
 
 # if __name__ == '__main__':
 #     collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)[:100]

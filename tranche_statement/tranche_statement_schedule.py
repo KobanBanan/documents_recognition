@@ -81,7 +81,7 @@ def collect_tranche_statement_schedule_data(pdf_dict: List[Dict[str, PyPDF2.PdfF
                 "PaymentScheduleMainDebtAmount": None
             })
 
-    return pd.DataFrame(result).dropna(subset=TRANCHE_STATEMENT_SCHEDULE_COLS, how='all')
+    return pd.DataFrame(result)
 
 #
 # collected_documents = collect_documents(TRANCHE_PATH)

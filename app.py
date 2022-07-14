@@ -58,7 +58,12 @@ def main():
                 classified_documents = classify_documents(pdf_corpus)
 
             with st.expander('Классифицированные документы'):
-                st.write({k: [x.get('file_name') for x in v] for k, v in classified_documents.items()})
+                map_ = {k: [x.get('file_name') for x in v] for k, v in classified_documents.items()}
+                if not all(map_.values()):
+                    st.write('Документы не были найдены')
+                    return
+
+                st.write(map_)
 
             with st.spinner(
                     'Распознавание документов "Соглашения об использовании Аналога собственноручной подписи..'):
