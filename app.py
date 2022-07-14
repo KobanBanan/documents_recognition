@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Dict
 
 import PyPDF2
+import pandas as pd
 import streamlit as st
 
 from agreement.agreement import collect_agreement_data
@@ -21,7 +22,6 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
-@st.cache
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
@@ -42,7 +42,7 @@ def main():
             """
         )
 
-    uploaded_zip = st.file_uploader('XML File', type="zip")
+    uploaded_zip = st.file_uploader('Загрузите архив', type="zip", key='uploaded_zip')
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
         pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = {
@@ -51,23 +51,33 @@ def main():
             file.filename.endswith('.pdf')
         }
 
-        recognize_btn = st.button("Распознать документы")
-        if recognize_btn:
-
-            with st.spinner('Классификация документов..'):
+        with st.spinner('Классификация документов..'):
+            if not st.session_state.get('classified_documents'):
                 classified_documents = classify_documents(pdf_corpus)
+                st.session_state['classified_documents'] = classified_documents
+            else:
+                classified_documents = st.session_state['classified_documents']
 
-            with st.expander('Классифицированные документы'):
-                map_ = {k: [x.get('file_name') for x in v] for k, v in classified_documents.items()}
-                if not all(map_.values()):
-                    st.write('Документы не были найдены')
-                    return
+        with st.expander('Классифицированные документы'):
+            map_ = {k: [x.get('file_name') for x in v] for k, v in classified_documents.items()}
+            if not all(map_.values()):
+                st.write('Документы не были найдены')
+                return
 
-                st.write(map_)
+            st.write(map_)
 
+        recognize_btn = st.button("Распознать документы")
+        if not st.session_state.get('recognize_btn'):
+            st.session_state['recognize_btn'] = recognize_btn
+
+        if st.session_state.get('recognize_btn'):
             with st.spinner(
                     'Распознавание документов "Соглашения об использовании Аналога собственноручной подписи..'):
-                asp_data = collect_asp_data(classified_documents['asp'])
+                if not isinstance(st.session_state.get('asp_data'), pd.DataFrame):
+                    asp_data = collect_asp_data(classified_documents['asp'])
+                    st.session_state['asp_data'] = asp_data
+                else:
+                    asp_data = st.session_state['asp_data']
                 st.dataframe(asp_data)
                 asp_download = convert_df(asp_data)
                 st.download_button(
@@ -78,9 +88,16 @@ def main():
                     key='download-csv'
                 )
 
+                st.session_state['recognize_btn'] = True
+
             with st.spinner(
                     'Распознавание документов "Согласие на обработку персональных данных и обязательства..'):
-                agreement_data = collect_agreement_data(classified_documents['agreement'])
+                if not isinstance(st.session_state.get('agreement_data'), pd.DataFrame):
+                    agreement_data = collect_agreement_data(classified_documents['agreement'])
+                    st.session_state['agreement_data'] = agreement_data
+                else:
+                    agreement_data = st.session_state['agreement_data']
+
                 st.dataframe(agreement_data)
                 agreement_download = convert_df(agreement_data)
                 st.download_button(
@@ -90,9 +107,15 @@ def main():
                     "text/csv",
                     key='download-csv'
                 )
+                st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
-                statement_data = collect_statement_data(classified_documents['statement'])
+                if not isinstance(st.session_state.get('statement_data'), pd.DataFrame):
+                    statement_data = collect_statement_data(classified_documents['statement'])
+                    st.session_state['statement_data'] = statement_data
+                else:
+                    statement_data = st.session_state['statement_data']
+
                 st.dataframe(statement_data)
                 statement_download = convert_df(statement_data)
                 st.download_button(
@@ -102,11 +125,17 @@ def main():
                     "text/csv",
                     key='download-csv'
                 )
+                st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
-                credit_facility_agreement_data = collect_credit_facility_agreement_data(
-                    classified_documents['credit_facility_agreement']
-                )
+                if not isinstance(st.session_state.get('credit_facility_agreement_data'), pd.DataFrame):
+                    credit_facility_agreement_data = collect_credit_facility_agreement_data(
+                        classified_documents['credit_facility_agreement']
+                    )
+                    st.session_state['credit_facility_agreement_data'] = credit_facility_agreement_data
+                else:
+                    credit_facility_agreement_data = st.session_state['credit_facility_agreement_data']
+
                 st.dataframe(credit_facility_agreement_data)
                 credit_facility_agreement_download = convert_df(credit_facility_agreement_data)
                 st.download_button(
@@ -116,11 +145,17 @@ def main():
                     "text/csv",
                     key='download-csv'
                 )
+                st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
-                tranche_statement_schedule_data = collect_tranche_statement_schedule_data(
-                    classified_documents['tranche_statement']
-                )
+                if not isinstance(st.session_state.get('tranche_statement_schedule_data'), pd.DataFrame):
+                    tranche_statement_schedule_data = collect_tranche_statement_schedule_data(
+                        classified_documents['tranche_statement']
+                    )
+                    st.session_state['tranche_statement_schedule_data'] = tranche_statement_schedule_data
+                else:
+                    tranche_statement_schedule_data = st.session_state['tranche_statement_schedule_data']
+
                 st.dataframe(tranche_statement_schedule_data)
                 tranche_statement_schedule_download = convert_df(tranche_statement_schedule_data)
                 st.download_button(
@@ -130,9 +165,15 @@ def main():
                     "text/csv",
                     key='download-csv'
                 )
+                st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
-                tranche_statement_data = collect_tranche_statement_data(classified_documents['tranche_statement'])
+                if not isinstance(st.session_state.get('tranche_statement_data'), pd.DataFrame):
+                    tranche_statement_data = collect_tranche_statement_data(classified_documents['tranche_statement'])
+                    st.session_state['tranche_statement_data'] = tranche_statement_data
+                else:
+                    tranche_statement_data = st.session_state['tranche_statement_data']
+
                 st.dataframe(tranche_statement_data)
                 tranche_statement_download = convert_df(tranche_statement_data)
                 st.download_button(
@@ -142,6 +183,7 @@ def main():
                     "text/csv",
                     key='download-csv'
                 )
+                st.session_state['recognize_btn'] = True
 
 
 if __name__ == '__main__':
