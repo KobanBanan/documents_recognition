@@ -42,6 +42,11 @@ def main():
             """
         )
 
+    with st.expander("Какие файлы поддерживаются?"):
+        st.write(
+            """ .PDF """
+        )
+
     uploaded_zip = st.file_uploader('Загрузите архив', type="zip", key='uploaded_zip')
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
@@ -51,6 +56,10 @@ def main():
             file.filename.endswith('.pdf')
         }
 
+        if not pdf_corpus:
+            st.warning('В переданном архиве отсутствуют .pdf файлы')
+            return
+
         with st.spinner('Классификация документов..'):
             if not st.session_state.get('classified_documents'):
                 classified_documents = classify_documents(pdf_corpus)
@@ -58,13 +67,21 @@ def main():
             else:
                 classified_documents = st.session_state['classified_documents']
 
-        with st.expander('Классифицированные документы'):
-            map_ = {k: [x.get('file_name') for x in v] for k, v in classified_documents.items()}
-            if not all(map_.values()):
-                st.write('Документы не были найдены')
-                return
+        classified_documents_ = classified_documents.get('classified')
 
-            st.write(map_)
+        if classified_documents.get('unclassified'):
+            with st.expander('Неклассифицированные документы'):
+                unclassified_documents = classified_documents['unclassified']
+
+                if not classified_documents_:
+                    st.write('Документы не были найдены')
+                    return
+
+                st.write(unclassified_documents)
+
+        if classified_documents.get('classified'):
+            with st.expander('Классифицированные документы'):
+                st.write(classified_documents_)
 
         recognize_btn = st.button("Распознать документы")
         if not st.session_state.get('recognize_btn'):
