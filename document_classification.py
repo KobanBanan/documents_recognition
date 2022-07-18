@@ -135,11 +135,11 @@ def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     unclassified = [u for u in unclassified if u]
 
     return {
-        'agreement': classify_agreement(pdf_dict),
-        'asp': classify_asp(pdf_dict),
-        'credit_facility_agreement': classify_credit_facility_agreement(pdf_dict),
-        'statement': classify_statement(pdf_dict),
-        'tranche_statement': classify_tranche_statement(pdf_dict),
+        'agreement': agreement,
+        'asp': asp,
+        'credit_facility_agreement': credit_facility_agreement,
+        'statement': statement,
+        'tranche_statement': tranche_statement,
         'classified': classified,
         'unclassified': unclassified
 
