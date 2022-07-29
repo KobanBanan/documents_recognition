@@ -151,7 +151,10 @@ def main():
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
                 if not isinstance(st.session_state.get('credit_facility_agreement_data'), pd.DataFrame):
                     time.sleep(1)
-                    credit_facility_agreement_data = pd.read_csv('demo_examples/credit_facility_agreement_data.csv')
+                    credit_facility_agreement_data = pd.read_csv(
+                        'demo_examples/credit_facility_agreement_data.csv',
+                        dtype={'ContractNumber': str}
+                    )
                     st.session_state['credit_facility_agreement_data'] = credit_facility_agreement_data
                 else:
                     credit_facility_agreement_data = st.session_state['credit_facility_agreement_data']
@@ -189,7 +192,10 @@ def main():
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
                 if not isinstance(st.session_state.get('tranche_statement_data'), pd.DataFrame):
                     time.sleep(1)
-                    tranche_statement_data = pd.read_csv('demo_examples/tranche_statement.csv')
+                    tranche_statement_data = pd.read_csv(
+                        'demo_examples/tranche_statement.csv',
+                        dtype={'TrancheNumber': str, 'ParentContractNumber': str}
+                    )
                     st.session_state['tranche_statement_data'] = tranche_statement_data
                 else:
                     tranche_statement_data = st.session_state['tranche_statement_data']
