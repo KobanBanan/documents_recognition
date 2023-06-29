@@ -1,0 +1,2 @@
+case,file,TrancheNumber,TrancheDate,ParentContractNumber,ParentContractDate,TrancheAmount,TrancheTerm,TranchePercent,TrancePercentYear,TrancheFullAmount,CustomerName,CustomerBirth,CustomerPassportSeries,CustomerPassportNumber,CustomerSignatureDate,TrancheSigningDate
+2,doc91.pdf,00000011,10.10.2022,00000000001,23.04.2021,9999,3,"57,440%","57,419%",558 руб. 00,Забиздулин Захир Пистолетович ,1980,5001,112233,22.04.2021,19.04.2021

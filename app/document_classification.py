@@ -48,11 +48,7 @@ def classify_credit_facility_agreement(pdf_dict):
                         (
                                 bool(re.search('ЗАЯВЛЕНИЕ О ПРЕДОСТАВЛЕНИИ\nПОТРЕБИТЕЛЬСКОГО ЗАЙМА', first_page_data)),
                                 bool(re.search('Лимит кредитования', first_page_data)),
-                                bool(re.search('с лимитом кредитования', first_page_data)),
-                                bool(
-                                    re.search('Индивидуальные условия договора потребительского\nзайма',
-                                              second_page_data)),
-                                bool(re.search('ОБЩИЕ УСЛОВИЯ ДОГОВОРА ПОТРЕБИТЕЛЬСКОГО ЗАЙМА', eight_page_data))
+
                         )
                 ):
                     result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
