@@ -6,12 +6,7 @@ import PyPDF2
 import pandas as pd
 import streamlit as st
 
-from agreement.agreement import collect_agreement_data
-from asp.asp import collect_asp_data
-from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
 from document_classification import classify_documents
-from statement.statement import collect_statement_data
-from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
 import time
 
 hide_streamlit_style = """

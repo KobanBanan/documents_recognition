@@ -1,10 +1,10 @@
 .idea
-agreement/agreement.csv
-asp/asp.csv
-credit_facility_agreement/credit_facility_agreement.csv
-statement/statement.csv
-tranche_statement/tranche_statement.csv
-tranche_statement/tranche_statement_schedule.csv
+app/agreement/agreement.csv
+app/asp/asp.csv
+app/credit_facility_agreement/credit_facility_agreement.csv
+app/statement/statement.csv
+app/tranche_statement/tranche_statement.csv
+app/tranche_statement/tranche_statement_schedule.csv
 # Default ignored files
 /shelf/
 /workspace.xml
