@@ -6,8 +6,12 @@ import PyPDF2
 import pandas as pd
 import streamlit as st
 
+from agreement.agreement import collect_agreement_data
+from asp.asp import collect_asp_data
+from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
 from document_classification import classify_documents
-import time
+from statement.statement import collect_statement_data
+from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
 
 hide_streamlit_style = """
             <style>
@@ -87,8 +91,7 @@ def main():
             with st.spinner(
                     'Распознавание документов "Соглашения об использовании Аналога собственноручной подписи..'):
                 if not isinstance(st.session_state.get('asp_data'), pd.DataFrame):
-                    time.sleep(1)
-                    asp_data = pd.read_csv('demo_examples/asp.csv')
+                    asp_data = collect_asp_data(classified_documents['asp'])
                     st.session_state['asp_data'] = asp_data
                 else:
                     asp_data = st.session_state['asp_data']
@@ -107,8 +110,7 @@ def main():
             with st.spinner(
                     'Распознавание документов "Согласие на обработку персональных данных и обязательства..'):
                 if not isinstance(st.session_state.get('agreement_data'), pd.DataFrame):
-                    time.sleep(1)
-                    agreement_data = pd.read_csv('demo_examples/agreement.csv')
+                    agreement_data = collect_agreement_data(classified_documents['agreement'])
                     st.session_state['agreement_data'] = agreement_data
                 else:
                     agreement_data = st.session_state['agreement_data']
@@ -126,8 +128,7 @@ def main():
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
                 if not isinstance(st.session_state.get('statement_data'), pd.DataFrame):
-                    time.sleep(1)
-                    statement_data = pd.read_csv('demo_examples/statement.csv')
+                    statement_data = collect_statement_data(classified_documents['statement'])
                     st.session_state['statement_data'] = statement_data
                 else:
                     statement_data = st.session_state['statement_data']
@@ -145,10 +146,8 @@ def main():
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
                 if not isinstance(st.session_state.get('credit_facility_agreement_data'), pd.DataFrame):
-                    time.sleep(1)
-                    credit_facility_agreement_data = pd.read_csv(
-                        'demo_examples/credit_facility_agreement_data.csv',
-                        dtype={'ContractNumber': str}
+                    credit_facility_agreement_data = collect_credit_facility_agreement_data(
+                        classified_documents['credit_facility_agreement']
                     )
                     st.session_state['credit_facility_agreement_data'] = credit_facility_agreement_data
                 else:
@@ -167,8 +166,9 @@ def main():
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
                 if not isinstance(st.session_state.get('tranche_statement_schedule_data'), pd.DataFrame):
-                    time.sleep(1)
-                    tranche_statement_schedule_data = pd.read_csv('demo_examples/tranche_statement_schedule.csv')
+                    tranche_statement_schedule_data = collect_tranche_statement_schedule_data(
+                        classified_documents['tranche_statement']
+                    )
                     st.session_state['tranche_statement_schedule_data'] = tranche_statement_schedule_data
                 else:
                     tranche_statement_schedule_data = st.session_state['tranche_statement_schedule_data']
@@ -186,11 +186,7 @@ def main():
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
                 if not isinstance(st.session_state.get('tranche_statement_data'), pd.DataFrame):
-                    time.sleep(1)
-                    tranche_statement_data = pd.read_csv(
-                        'demo_examples/tranche_statement.csv',
-                        dtype={'TrancheNumber': str, 'ParentContractNumber': str}
-                    )
+                    tranche_statement_data = collect_tranche_statement_data(classified_documents['tranche_statement'])
                     st.session_state['tranche_statement_data'] = tranche_statement_data
                 else:
                     tranche_statement_data = st.session_state['tranche_statement_data']
