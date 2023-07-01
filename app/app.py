@@ -231,15 +231,17 @@ def main():
                 else:
                     restruct_agreement = st.session_state['restruct_agreement']
 
-                st.dataframe(restruct_agreement)
-                restruct_agreement_download = convert_df(restruct_agreement)
-                st.download_button(
-                    "Скачать restruct_agreement",
-                    restruct_agreement_download,
-                    "restruct_agreement.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+                if not restruct_agreement.empty:
+                    st.dataframe(restruct_agreement)
+                    restruct_agreement_download = convert_df(restruct_agreement)
+                    st.download_button(
+                        "Скачать restruct_agreement",
+                        restruct_agreement_download,
+                        "restruct_agreement.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
                 st.session_state['recognize_btn'] = True
 
 
