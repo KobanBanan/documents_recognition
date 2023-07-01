@@ -1,5 +1,3 @@
-import os
-import pathlib
 import re
 from typing import Dict, List
 
@@ -8,7 +6,7 @@ import pandas as pd
 import streamlit as st
 from stqdm import stqdm
 
-# AGREEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
+
 AGREEMENT_COLS = [
     "LastName",
     "FirstName",
@@ -17,16 +15,6 @@ AGREEMENT_COLS = [
     "PassportNumber",
     "SigningDate"
 ]
-
-
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if pathlib.Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
 
 
 def extract_passport(s):
@@ -77,10 +65,10 @@ def collect_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
         try:
             num_pages = range(pdf_reader.numPages)
 
-            first_page_data = pdf_reader.getPage(0).extractText()
+            first_page_data = pdf_reader.getPage(0).extract_text()
 
             last_page = pdf_reader.getPage(num_pages[-1])
-            last_page_data = last_page.extractText()
+            last_page_data = last_page.extract_text()
 
             # extract_data from first page
 
@@ -114,14 +102,3 @@ def collect_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
             })
 
     return pd.DataFrame(result)
-
-# collected_documents = collect_documents(AGREEMENT_PATH)
-#
-# result = []
-#
-# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-#     data = collect_agreement_data(doc)
-#     result.append(data)
-#
-# df = pd.DataFrame(result)
-# df.to_csv('agreement.csv', index=False)

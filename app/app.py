@@ -10,6 +10,7 @@ from agreement.agreement import collect_agreement_data
 from asp.asp import collect_asp_data
 from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
 from document_classification import classify_documents
+from restruct_agreement import collect_restruct_agreement_data
 from statement.statement import collect_statement_data
 from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
 
@@ -24,6 +25,18 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
+
+
+def read_pdf(zf: zipfile.ZipFile):
+    result = {}
+    file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
+    for file in file_list:
+        try:
+            result.update({file.filename: PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
+        except PyPDF2.errors.PdfReadError:
+            st.warning(f'Ошибка чтения файла {file.filename}')
+
+    return result
 
 
 def main():
@@ -50,11 +63,8 @@ def main():
     uploaded_zip = st.file_uploader('Загрузите архив', type="zip", key='uploaded_zip')
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
-        pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = {
-            file.filename:
-                PyPDF2.PdfFileReader(BytesIO(zf.read(file))) for file in zf.filelist if
-            file.filename.endswith('.pdf')
-        }
+
+        pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = read_pdf(zf)
 
         if not pdf_corpus:
             st.warning('В переданном архиве отсутствуют .pdf файлы')
@@ -95,15 +105,17 @@ def main():
                     st.session_state['asp_data'] = asp_data
                 else:
                     asp_data = st.session_state['asp_data']
-                st.dataframe(asp_data)
-                asp_download = convert_df(asp_data)
-                st.download_button(
-                    "Скачать asp.csv",
-                    asp_download,
-                    "asp.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+
+                if not asp_data.empty:
+                    st.dataframe(asp_data)
+                    asp_download = convert_df(asp_data)
+                    st.download_button(
+                        "Скачать asp.csv",
+                        asp_download,
+                        "asp.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
 
                 st.session_state['recognize_btn'] = True
 
@@ -115,15 +127,17 @@ def main():
                 else:
                     agreement_data = st.session_state['agreement_data']
 
-                st.dataframe(agreement_data)
-                agreement_download = convert_df(agreement_data)
-                st.download_button(
-                    "Скачать agreement.csv",
-                    agreement_download,
-                    "agreement.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+                if not agreement_data.empty:
+                    st.dataframe(agreement_data)
+                    agreement_download = convert_df(agreement_data)
+                    st.download_button(
+                        "Скачать agreement.csv",
+                        agreement_download,
+                        "agreement.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
                 st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
@@ -133,15 +147,17 @@ def main():
                 else:
                     statement_data = st.session_state['statement_data']
 
-                st.dataframe(statement_data)
-                statement_download = convert_df(statement_data)
-                st.download_button(
-                    "Скачать statement.csv",
-                    statement_download,
-                    "statement.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+                if not statement_data.empty:
+                    st.dataframe(statement_data)
+                    statement_download = convert_df(statement_data)
+                    st.download_button(
+                        "Скачать statement.csv",
+                        statement_download,
+                        "statement.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
                 st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "Заявление о предоставлении потребительского займа..'):
@@ -153,15 +169,17 @@ def main():
                 else:
                     credit_facility_agreement_data = st.session_state['credit_facility_agreement_data']
 
-                st.dataframe(credit_facility_agreement_data)
-                credit_facility_agreement_download = convert_df(credit_facility_agreement_data)
-                st.download_button(
-                    "Скачать credit_facility_agreement.csv",
-                    credit_facility_agreement_download,
-                    "credit_facility_agreement_data.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+                if not credit_facility_agreement_data.empty:
+                    st.dataframe(credit_facility_agreement_data)
+                    credit_facility_agreement_download = convert_df(credit_facility_agreement_data)
+                    st.download_button(
+                        "Скачать credit_facility_agreement.csv",
+                        credit_facility_agreement_download,
+                        "credit_facility_agreement_data.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
                 st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
@@ -173,15 +191,17 @@ def main():
                 else:
                     tranche_statement_schedule_data = st.session_state['tranche_statement_schedule_data']
 
-                st.dataframe(tranche_statement_schedule_data)
-                tranche_statement_schedule_download = convert_df(tranche_statement_schedule_data)
-                st.download_button(
-                    "Скачать tranche_statement_schedule.csv",
-                    tranche_statement_schedule_download,
-                    "tranche_statement_schedule.csv",
-                    "text/csv",
-                    key='download-csv'
-                )
+                if not tranche_statement_schedule_data.empty:
+                    st.dataframe(tranche_statement_schedule_data)
+                    tranche_statement_schedule_download = convert_df(tranche_statement_schedule_data)
+                    st.download_button(
+                        "Скачать tranche_statement_schedule.csv",
+                        tranche_statement_schedule_download,
+                        "tranche_statement_schedule.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
                 st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "График платежей по договору потребительского Займа.."'):
@@ -191,12 +211,32 @@ def main():
                 else:
                     tranche_statement_data = st.session_state['tranche_statement_data']
 
-                st.dataframe(tranche_statement_data)
-                tranche_statement_download = convert_df(tranche_statement_data)
+                if not tranche_statement_data.empty:
+                    st.dataframe(tranche_statement_data)
+                    tranche_statement_download = convert_df(tranche_statement_data)
+                    st.download_button(
+                        "Скачать tranche_statement.csv",
+                        tranche_statement_download,
+                        "tranche_statement.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
+                st.session_state['recognize_btn'] = True
+
+            with st.spinner('Распознавание документов "Соглашение о реструктуризации задолженности..."'):
+                if not isinstance(st.session_state.get('restruct_agreement'), pd.DataFrame):
+                    restruct_agreement = collect_restruct_agreement_data(classified_documents['restruct_agreement'])
+                    st.session_state['restruct_agreement'] = restruct_agreement
+                else:
+                    restruct_agreement = st.session_state['restruct_agreement']
+
+                st.dataframe(restruct_agreement)
+                restruct_agreement_download = convert_df(restruct_agreement)
                 st.download_button(
-                    "Скачать tranche_statement.csv",
-                    tranche_statement_download,
-                    "tranche_statement.csv",
+                    "Скачать restruct_agreement",
+                    restruct_agreement_download,
+                    "restruct_agreement.csv",
                     "text/csv",
                     key='download-csv'
                 )

@@ -1,11 +1,8 @@
-import os
 import re
-from pathlib import Path
 from typing import Dict, List
 
 import PyPDF2
 import pandas as pd
-import streamlit as st
 from stqdm import stqdm
 
 CREDIT_FACILITY_AGREEMENT_COLS = [
@@ -53,17 +50,7 @@ full_amount_percent_1 = re.compile(r'(?<=\))(.*?)(?= %годовых)')
 creditor_name_1 = re.compile(r'(?<=бщество – )(.*?)(?=\(ОГРН)')
 order_date_1 = re.compile(r'(?<=с )(.*?)(?=г)')
 
-
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
-
-
+1
 def extract(s, p):
     match = re.search(p, s)
     if match:
@@ -199,13 +186,13 @@ def collect_credit_facility_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFi
             num_pages = pdf_reader.numPages
 
             # Pages
-            first_page_data = pdf_reader.getPage(0).extractText()
-            second_page_data = pdf_reader.getPage(1).extractText()
-            third_page_data = pdf_reader.getPage(2).extractText()
-            six_page_data = pdf_reader.getPage(5).extractText()
-            seven_page_data = pdf_reader.getPage(6).extractText()
-            eight_page_data = pdf_reader.getPage(7).extractText()
-            nine_page_data = pdf_reader.getPage(8).extractText()
+            first_page_data = pdf_reader.getPage(0).extract_text()
+            second_page_data = pdf_reader.getPage(1).extract_text()
+            third_page_data = pdf_reader.getPage(2).extract_text()
+            six_page_data = pdf_reader.getPage(5).extract_text()
+            seven_page_data = pdf_reader.getPage(6).extract_text()
+            eight_page_data = pdf_reader.getPage(7).extract_text()
+            nine_page_data = pdf_reader.getPage(8).extract_text()
 
             # Permanent data
             # CreditLimit 10
@@ -257,7 +244,7 @@ def collect_credit_facility_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFi
 
             elif num_pages in (21, 23, 25, 24, 26, 27, 31, 35, 32, 36,):
 
-                twenty_one_page_data = pdf_reader.getPage(20).extractText()
+                twenty_one_page_data = pdf_reader.getPage(20).extract_text()
 
                 mapping = {
                     21: {
@@ -417,21 +404,3 @@ def collect_credit_facility_agreement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFi
             })
 
     return pd.DataFrame(result)
-
-# if __name__ == '__main__':
-#     collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)[:100]
-#     result = []
-#     with Pool(cpu_count()) as p:
-#         r = tqdm(p.imap(collect_credit_facility_agreement_data, collected_documents), total=len(collected_documents))
-#
-#     df = pd.DataFrame(list(r))
-#     df.to_csv('credit_facility_agreement.csv', index=False)
-
-# result = []
-# collected_documents = collect_documents(CREDIT_FACILITY_AGREEMENT_PATH)
-# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-#     data = collect_credit_facility_agreement_data(doc)
-#     result.append(data)
-#
-# df = pd.DataFrame(list(result))
-# df.to_csv('credit_facility_agreement.csv', index=False)

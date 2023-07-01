@@ -1,5 +1,3 @@
-import os
-import pathlib
 import re
 from typing import Dict, List
 
@@ -26,16 +24,6 @@ doc_name_regex = (
 )
 
 
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if pathlib.Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
-
-
 def collect_asp_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
     :param pdf_dict:
@@ -48,8 +36,8 @@ def collect_asp_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
         try:
             num_pages = range(pdf_reader.numPages)
 
-            first_page_data = pdf_reader.getPage(0).extractText()
-            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+            first_page_data = pdf_reader.getPage(0).extract_text()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extract_text()
 
             doc_name = extract_doc_name(first_page_data)
             creditor_name = extract_creditor_name(first_page_data)
@@ -97,14 +85,3 @@ def extract_accept_date(s):
     match = re.search(acceptance_date_regex, s.replace('\n', ' '))
     if match:
         return ".".join(match.groups())
-
-# collected_documents = collect_documents(ASP_PATH)
-#
-# result = []
-#
-# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-#     data = collect_data(doc)
-#     result.append(data)
-#
-# df = pd.DataFrame(result)
-# df.to_csv('asp.csv', index=False)

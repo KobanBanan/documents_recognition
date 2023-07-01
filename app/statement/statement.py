@@ -1,5 +1,3 @@
-import os
-import pathlib
 import re
 from typing import Dict, List
 
@@ -19,8 +17,6 @@ STATEMENT_COLS = [
     "SigningDate"
 ]
 
-
-# STATEMENT_PATH = '/Users/a1234/Desktop/PeedoRevoTest'
 
 def extarc_load_amount(s):
     pattern = '(?<=Сумма займа: )(.*?)(?= руб.)'
@@ -74,16 +70,6 @@ def extract_name(s):
     return ""
 
 
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if pathlib.Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
-
-
 def collect_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
 
@@ -95,8 +81,8 @@ def collect_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
         file_name, pdf_reader = file.get('file_name'), file.get('pdf_reader')
         try:
             num_pages = range(pdf_reader.numPages)
-            first_page_data = pdf_reader.getPage(0).extractText()
-            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+            first_page_data = pdf_reader.getPage(0).extract_text()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extract_text()
 
             name = extract_name(first_page_data)
             name = [n for n in name.split(" ") if n]
@@ -140,14 +126,3 @@ def collect_statement_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
                 }
             )
     return pd.DataFrame(result)
-
-# collected_documents = collect_documents(STATEMENT_PATH)
-#
-# result = []
-#
-# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-#     data = collect_statement_data(doc)
-#     result.append(data)
-#
-# df = pd.DataFrame(result)
-# df.to_csv('statement.csv', index=False)

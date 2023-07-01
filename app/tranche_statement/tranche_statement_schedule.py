@@ -1,5 +1,3 @@
-import os
-import pathlib
 import re
 from typing import Dict, List
 
@@ -41,16 +39,6 @@ def extract_payment_schedule_main_debt_amount(s):
             return amount[2].strip().replace(',', '.').replace(' ', '')
 
 
-def collect_documents(directory):
-    docs = []
-    for dirpath, _, filenames in os.walk(directory):
-        for f in filenames:
-            if pathlib.Path(f).suffix in ('.pdf',):
-                docs.append(os.path.abspath(os.path.join(dirpath, f)))
-
-    return docs
-
-
 def collect_tranche_statement_schedule_data(pdf_dict: List[Dict[str, PyPDF2.PdfFileReader]]):
     """
 
@@ -63,8 +51,8 @@ def collect_tranche_statement_schedule_data(pdf_dict: List[Dict[str, PyPDF2.PdfF
         try:
             num_pages = range(pdf_reader.numPages)
 
-            first_page_data = pdf_reader.getPage(0).extractText()
-            last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+            first_page_data = pdf_reader.getPage(0).extract_text()
+            last_page_data = pdf_reader.getPage(num_pages[-1]).extract_text()
             result.append({
                 "file": file_name,
                 "HasPaymentSchedule": extract_has_payment_schedule(first_page_data),
@@ -81,15 +69,3 @@ def collect_tranche_statement_schedule_data(pdf_dict: List[Dict[str, PyPDF2.PdfF
             })
 
     return pd.DataFrame(result)
-
-#
-# collected_documents = collect_documents(TRANCHE_PATH)
-# # collected_documents = ['/Users/a1234/Desktop/ocr/Revo3/tranche_statement/000062273/000062273_tranche_statement.pdf']
-# result = []
-#
-# for _, doc in zip(tqdm(range(len(collected_documents))), collected_documents):
-#     data = collect_tranche_statement_data(doc)
-#     result.append(data)
-#
-# df = pd.DataFrame(result)
-# df.to_csv('tranche_statement_schedule.csv', index=False)

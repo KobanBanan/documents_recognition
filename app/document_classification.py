@@ -12,7 +12,7 @@ def classify_agreement(pdf_dict):
     with st.spinner('Согласие на обработку персональных данных и обязательства...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             try:
-                first_page_data = pdf_reader.getPage(0).extractText()
+                first_page_data = pdf_reader.getPage(0).extract_text()
                 if bool(re.search('Согласие на обработку персональных данных и обязательства', first_page_data)):
                     result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
             except Exception:
@@ -26,7 +26,7 @@ def classify_asp(pdf_dict):
     with st.spinner('Соглашения об использовании Аналога собственноручной подписи...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             try:
-                first_page_data = pdf_reader.getPage(0).extractText()
+                first_page_data = pdf_reader.getPage(0).extract_text()
                 if bool(re.search('СОГЛАШЕНИЕ ОБ ИСПОЛЬЗОВАНИИ АНАЛОГА СОБСТВЕННОРУЧНОЙ ПОДПИСИ', first_page_data)):
                     result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
             except Exception:
@@ -40,9 +40,9 @@ def classify_credit_facility_agreement(pdf_dict):
     with st.spinner('Заявление о предоставлении потребительского займа...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             try:
-                first_page_data = pdf_reader.getPage(0).extractText()
-                second_page_data = pdf_reader.getPage(1).extractText()
-                eight_page_data = pdf_reader.getPage(7).extractText()
+                first_page_data = pdf_reader.getPage(0).extract_text()
+                second_page_data = pdf_reader.getPage(1).extract_text()
+                eight_page_data = pdf_reader.getPage(7).extract_text()
 
                 if all(
                         (
@@ -63,7 +63,7 @@ def classify_statement(pdf_dict):
     with st.spinner('Заявление о предоставлении потребительского займа...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             try:
-                first_page_data = pdf_reader.getPage(0).extractText()
+                first_page_data = pdf_reader.getPage(0).extract_text()
                 if bool(re.search('ЗАЯВЛЕНИЕ О ПРЕДОСТАВЛЕНИИ\nПОТРЕБИТЕЛЬСКОГО ЗАЙМА', first_page_data)) and \
                         bool(re.search('Сумма займа', first_page_data)):
                     result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
@@ -79,8 +79,8 @@ def classify_tranche_statement(pdf_dict):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             try:
                 num_pages = range(pdf_reader.numPages)
-                first_page_data = pdf_reader.getPage(0).extractText()
-                last_page_data = pdf_reader.getPage(num_pages[-1]).extractText()
+                first_page_data = pdf_reader.getPage(0).extract_text()
+                last_page_data = pdf_reader.getPage(num_pages[-1]).extract_text()
                 if all(
                         (
                                 bool(re.search('Заявление о предоставлении транша\nпо договору потребительского займа',
@@ -113,7 +113,11 @@ def classify_restruct_agreement(pdf_dict):
     result = []
     with st.spinner('Соглашение о реструктуризации задолженности...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
-            pass
+            first_page_data = pdf_reader.getPage(0).extract_text()
+            if 'Соглашение о реструктуризации задолженности' in first_page_data:
+                result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
+
+    return result
 
 
 def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
@@ -126,11 +130,12 @@ def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     credit_facility_agreement = classify_credit_facility_agreement(pdf_dict)
     statement = classify_statement(pdf_dict)
     tranche_statement = classify_tranche_statement(pdf_dict)
+    restruct_agreement = classify_restruct_agreement(pdf_dict)
 
     classified = (
             [a.get('file_name') for a in agreement] + [a.get('file_name') for a in asp] +
             [s.get('file_name') for s in statement] + [c.get('file_name') for c in credit_facility_agreement] +
-            [t.get('file_name') for t in tranche_statement]
+            [t.get('file_name') for t in tranche_statement] + [r.get('file_name') for r in restruct_agreement]
     )
 
     unclassified = set(pdf_dict.keys()) ^ set(classified)
@@ -143,6 +148,7 @@ def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
         'credit_facility_agreement': credit_facility_agreement,
         'statement': statement,
         'tranche_statement': tranche_statement,
+        'restruct_agreement': restruct_agreement,
         'classified': classified,
         'unclassified': unclassified
 
