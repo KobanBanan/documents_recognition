@@ -109,6 +109,13 @@ def classify_tranche_statement(pdf_dict):
     return result
 
 
+def classify_restruct_agreement(pdf_dict):
+    result = []
+    with st.spinner('Соглашение о реструктуризации задолженности...'):
+        for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
+            pass
+
+
 def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     """
     :param pdf_dict:
