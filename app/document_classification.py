@@ -125,29 +125,31 @@ def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     :param pdf_dict:
     :return:
     """
-    agreement = classify_agreement(pdf_dict)
-    asp = classify_asp(pdf_dict)
-    credit_facility_agreement = classify_credit_facility_agreement(pdf_dict)
-    statement = classify_statement(pdf_dict)
-    tranche_statement = classify_tranche_statement(pdf_dict)
+    # agreement = classify_agreement(pdf_dict)
+    # asp = classify_asp(pdf_dict)
+    # credit_facility_agreement = classify_credit_facility_agreement(pdf_dict)
+    # statement = classify_statement(pdf_dict)
+    # tranche_statement = classify_tranche_statement(pdf_dict)
     restruct_agreement = classify_restruct_agreement(pdf_dict)
 
-    classified = (
-            [a.get('file_name') for a in agreement] + [a.get('file_name') for a in asp] +
-            [s.get('file_name') for s in statement] + [c.get('file_name') for c in credit_facility_agreement] +
-            [t.get('file_name') for t in tranche_statement] + [r.get('file_name') for r in restruct_agreement]
-    )
+    # classified = (
+    #         [a.get('file_name') for a in agreement] + [a.get('file_name') for a in asp] +
+    #         [s.get('file_name') for s in statement] + [c.get('file_name') for c in credit_facility_agreement] +
+    #         [t.get('file_name') for t in tranche_statement] + [r.get('file_name') for r in restruct_agreement]
+    # )
+
+    classified = [r.get('file_name') for r in restruct_agreement]
 
     unclassified = set(pdf_dict.keys()) ^ set(classified)
 
     unclassified = [u for u in unclassified if u]
 
     return {
-        'agreement': agreement,
-        'asp': asp,
-        'credit_facility_agreement': credit_facility_agreement,
-        'statement': statement,
-        'tranche_statement': tranche_statement,
+        # 'agreement': agreement,
+        # 'asp': asp,
+        # 'credit_facility_agreement': credit_facility_agreement,
+        # 'statement': statement,
+        # 'tranche_statement': tranche_statement,
         'restruct_agreement': restruct_agreement,
         'classified': classified,
         'unclassified': unclassified
