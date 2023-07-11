@@ -6,13 +6,9 @@ import PyPDF2
 import pandas as pd
 import streamlit as st
 
-from agreement.agreement import collect_agreement_data
-from asp.asp import collect_asp_data
-from credit_facility_agreement.credit_facility_agreement import collect_credit_facility_agreement_data
 from document_classification import classify_documents
 from restruct_agreement import collect_restruct_agreement_data
-from statement.statement import collect_statement_data
-from tranche_statement import collect_tranche_statement_data, collect_tranche_statement_schedule_data
+from statement_court_order import collect_statement_court_order
 
 hide_streamlit_style = """
             <style>
@@ -47,6 +43,7 @@ def main():
         st.write(
             """
             1. Соглашение о реструктуризации задолженности
+            2. Заявление о выдаче судебного приказа о взыскании долга по договору займа
 
             """
         )
@@ -234,6 +231,27 @@ def main():
                         "Скачать restruct_agreement",
                         restruct_agreement_download,
                         "restruct_agreement.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
+                st.session_state['recognize_btn'] = True
+
+            with st.spinner('Распознавание документов "Заявление о выдаче '
+                            'судебного приказа о взыскании долга по договору займа..."'):
+                if not isinstance(st.session_state.get('statement_court_order'), pd.DataFrame):
+                    statement_court_order = collect_statement_court_order(classified_documents['statement_court_order'])
+                    st.session_state['statement_court_order'] = statement_court_order
+                else:
+                    statement_court_order = st.session_state['statement_court_order']
+
+                if not statement_court_order.empty:
+                    st.dataframe(statement_court_order)
+                    statement_court_order_download = convert_df(statement_court_order)
+                    st.download_button(
+                        "Скачать statement_court_order",
+                        statement_court_order_download,
+                        "statement_court_order.csv",
                         "text/csv",
                         key='download-csv'
                     )
