@@ -2,6 +2,7 @@ import os
 import pathlib
 import re
 
+
 def collect_documents(directory):
     docs = []
     for dirpath, _, filenames in os.walk(directory):

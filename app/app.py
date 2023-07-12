@@ -6,9 +6,8 @@ import PyPDF2
 import pandas as pd
 import streamlit as st
 
+from docs import collect_restruct_agreement_data, collect_statement_court_order
 from document_classification import classify_documents
-from restruct_agreement import collect_restruct_agreement_data
-from statement_court_order import collect_statement_court_order
 
 hide_streamlit_style = """
             <style>
@@ -28,7 +27,7 @@ def read_pdf(zf: zipfile.ZipFile):
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
     for file in file_list:
         try:
-            result.update({file.filename: PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
+            result.update({zf.getinfo(file.filename).filename: PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
         except PyPDF2.errors.PdfReadError:
             st.warning(f'Ошибка чтения файла {file.filename}')
 

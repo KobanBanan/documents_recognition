@@ -4,6 +4,7 @@ import PyPDF2
 import streamlit as st
 from stqdm import stqdm
 
+from docs import RestructAgreement, StatementCourtOrder
 from utils import get_list_of_pages, pattern_match
 
 
@@ -13,7 +14,7 @@ def classify_restruct_agreement(pdf_dict):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
             first_page_data = pdf_reader.getPage(0).extract_text()
             if 'Соглашение о реструктуризации задолженности' in first_page_data:
-                result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
+                result.append(RestructAgreement(file_name, pdf_reader))
 
     return result
 
@@ -33,7 +34,7 @@ def classify_statement_court_order(pdf_dict):
             ]
 
             if first_page_condition and all(other_conditions):
-                result.append({'file_name': file_name, 'pdf_reader': pdf_reader})
+                result.append(StatementCourtOrder(file_name, pdf_reader))
 
     return result
 
@@ -47,7 +48,7 @@ def classify_documents(pdf_dict: Dict[str, PyPDF2.PdfFileReader]):
     restruct_agreement = classify_restruct_agreement(pdf_dict)
     statement_court_order = classify_statement_court_order(pdf_dict)
 
-    classified = [r.get('file_name') for r in restruct_agreement] + [s.get('file_name') for s in statement_court_order]
+    classified = [r.file_name for r in restruct_agreement] + [s.file_name for s in statement_court_order]
     unclassified = set(pdf_dict.keys()) ^ set(classified)
     unclassified = [u for u in unclassified if u]
 
