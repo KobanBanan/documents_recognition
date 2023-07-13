@@ -10,13 +10,13 @@ from .doc import Document
 
 class RestructAgreement(Document):
     patterns = {
-        'restruct_agreement_city': re.compile(r'г\.\s([^., ]+)'),
-        'restruct_agreement_date': re.compile(r'\d{2}\.\d{2}\.\d{4}'),
-        'restruct_agreement_customer_name': re.compile(r'([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+)'),
-        'restruct_agreement_contract_number': re.compile(r'№\s+(\d+)'),
-        'restruct_agreement_contract_date': re.compile(r'\d{2}\.\d{2}\.\d{4}'),
-        'restruct_agreement_amount': re.compile(r'(\d+)\s+рублей\s+(\d+)\s+копеек'),
-        'restruct_agreement_due_date': re.compile(r'\d{2}\.\d{2}\.\d{4}')
+        'restruct_agreement_city': r'г\.\s([^., ]+)',
+        'restruct_agreement_date': r'\d{2}\.\d{2}\.\d{4}',
+        'restruct_agreement_customer_name': r'([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+)',
+        'restruct_agreement_contract_number': r'№\s+(\d+)',
+        'restruct_agreement_contract_date': r'\d{2}\.\d{2}\.\d{4}',
+        'restruct_agreement_amount': r'(\d+)\s+рублей\s+(\d+)\s+копеек',
+        'restruct_agreement_due_date': r'\d{2}\.\d{2}\.\d{4}'
     }
 
     def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader):
@@ -68,6 +68,7 @@ class RestructAgreement(Document):
     def agreement_amount(self):
         return self._extract_agreement_amount()
 
+    @property
     def contract_number(self):
         return self._extract_contract_number()
 
