@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Dict
 
 import PyPDF2
+import ftfy
 import pandas as pd
 import streamlit as st
 
@@ -27,7 +28,8 @@ def read_pdf(zf: zipfile.ZipFile):
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
     for file in file_list:
         try:
-            result.update({zf.getinfo(file.filename).filename: PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
+            result.update(
+                {ftfy.fix_text(zf.getinfo(file.filename).filename): PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
         except PyPDF2.errors.PdfReadError:
             st.warning(f'Ошибка чтения файла {file.filename}')
 

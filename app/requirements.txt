@@ -11,3 +11,4 @@ watchdog==2.1.9
 streamlit~=1.10.0
 stqdm~=0.0.4
 altair==4.0
+ftfy==6.1.1
