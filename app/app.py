@@ -93,25 +93,25 @@ def main():
 
         if st.session_state.get('recognize_btn'):
 
-            with st.spinner('Распознавание документов "Соглашение о реструктуризации задолженности..."'):
-                if not isinstance(st.session_state.get('restruct_agreement'), pd.DataFrame):
-                    restruct_agreement = collect_restruct_agreement_data(classified_documents['restruct_agreement'])
-                    st.session_state['restruct_agreement'] = restruct_agreement
-                else:
-                    restruct_agreement = st.session_state['restruct_agreement']
-
-                if not restruct_agreement.empty:
-                    st.dataframe(restruct_agreement)
-                    restruct_agreement_download = convert_df(restruct_agreement)
-                    st.download_button(
-                        "Скачать restruct_agreement",
-                        restruct_agreement_download,
-                        "restruct_agreement.csv",
-                        "text/csv",
-                        key='download-csv'
-                    )
-
-                st.session_state['recognize_btn'] = True
+            # with st.spinner('Распознавание документов "Соглашение о реструктуризации задолженности..."'):
+            #     if not isinstance(st.session_state.get('restruct_agreement'), pd.DataFrame):
+            #         restruct_agreement = collect_restruct_agreement_data(classified_documents['restruct_agreement'])
+            #         st.session_state['restruct_agreement'] = restruct_agreement
+            #     else:
+            #         restruct_agreement = st.session_state['restruct_agreement']
+            #
+            #     if not restruct_agreement.empty:
+            #         st.dataframe(restruct_agreement)
+            #         restruct_agreement_download = convert_df(restruct_agreement)
+            #         st.download_button(
+            #             "Скачать restruct_agreement",
+            #             restruct_agreement_download,
+            #             "restruct_agreement.csv",
+            #             "text/csv",
+            #             key='download-csv'
+            #         )
+            #
+            #     st.session_state['recognize_btn'] = True
 
             with st.spinner('Распознавание документов "Заявление о выдаче '
                             'судебного приказа о взыскании долга по договору займа..."'):
