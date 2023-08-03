@@ -7,7 +7,8 @@ import ftfy
 import pandas as pd
 import streamlit as st
 
-from docs import collect_restruct_agreement_data, collect_statement_court_order
+from docs import collect_restruct_agreement_data, collect_statement_court_order, \
+    collect_statement_court_order_annex_list
 from document_classification import classify_documents
 
 hide_streamlit_style = """
@@ -117,9 +118,14 @@ def main():
                             'судебного приказа о взыскании долга по договору займа..."'):
                 if not isinstance(st.session_state.get('statement_court_order'), pd.DataFrame):
                     statement_court_order = collect_statement_court_order(classified_documents['statement_court_order'])
+                    statement_court_order_annex_list = collect_statement_court_order_annex_list(
+                        classified_documents['statement_court_order']
+                    )
                     st.session_state['statement_court_order'] = statement_court_order
+                    st.session_state['statement_court_order_annex_list'] = statement_court_order_annex_list
                 else:
                     statement_court_order = st.session_state['statement_court_order']
+                    statement_court_order_annex_list = st.session_state['statement_court_order_annex_list']
 
                 if not statement_court_order.empty:
                     st.dataframe(statement_court_order)
@@ -128,6 +134,17 @@ def main():
                         "Скачать statement_court_order",
                         statement_court_order_download,
                         "statement_court_order.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+
+                if not statement_court_order_annex_list.empty:
+                    st.dataframe(statement_court_order_annex_list)
+                    statement_court_order_annex_list_download = convert_df(statement_court_order_annex_list)
+                    st.download_button(
+                        "Скачать statement_court_order_annex_list",
+                        statement_court_order_annex_list_download,
+                        "statement_court_order_annex_list.csv",
                         "text/csv",
                         key='download-csv'
                     )
