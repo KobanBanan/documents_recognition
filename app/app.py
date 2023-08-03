@@ -7,7 +7,7 @@ import ftfy
 import pandas as pd
 import streamlit as st
 
-from docs import collect_restruct_agreement_data, collect_statement_court_order, \
+from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
 
@@ -22,6 +22,13 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
+
+
+def download_json(json_data):
+    # Download JSON file when the button is clicked
+    with open('data.json', 'w') as f:
+        f.write(json_data)
+
 
 
 def read_pdf(zf: zipfile.ZipFile):
@@ -131,11 +138,18 @@ def main():
                     st.dataframe(statement_court_order)
                     statement_court_order_download = convert_df(statement_court_order)
                     st.download_button(
-                        "Скачать statement_court_order",
+                        "Скачать statement_court_order.csv",
                         statement_court_order_download,
                         "statement_court_order.csv",
                         "text/csv",
                         key='download-csv'
+                    )
+
+                    st.download_button(
+                        label='Скачать statement_court_order.json',
+                        data=statement_court_order.to_json(orient='records'),
+                        file_name='statement_court_order.json',
+                        mime='application/json'
                     )
 
                 if not statement_court_order_annex_list.empty:
@@ -147,6 +161,13 @@ def main():
                         "statement_court_order_annex_list.csv",
                         "text/csv",
                         key='download-csv'
+                    )
+
+                    st.download_button(
+                        label='Скачать statement_court_order_annex_list_download.json',
+                        data=statement_court_order_annex_list.to_json(orient='records'),
+                        file_name='statement_court_order_annex_list_download.json',
+                        mime='application/json'
                     )
 
                 st.session_state['recognize_btn'] = True

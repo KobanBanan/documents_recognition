@@ -39,10 +39,13 @@ class StatementCourtOrder(Document):
     def collect_annex_list(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
-        name_full = self.extract(r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', first_page_data),
+        name_full = self.extract(r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', first_page_data)
         dates = self.extract(r'\b\d{2}\.\d{2}\.\d{4}\b', first_page_data)
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
-        court_address = self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
+        court_address = (
+                self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
+                or [first_page_data.split("Взыскатель:", 1)[0]]
+        )
         contract_number = self.extract(r"№\s*\d+-\d+", first_page_data)
 
         return {
