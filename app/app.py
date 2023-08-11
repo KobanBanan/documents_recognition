@@ -147,9 +147,9 @@ def main():
                     )
 
                     st.download_button(
-                        label='Скачать statement_court_order_annex_list_download.json',
+                        label='Скачать statement_court_order_annex_list.json',
                         data=statement_court_order_annex_list.to_json(orient='records'),
-                        file_name='statement_court_order_annex_list_download.json',
+                        file_name='statement_court_order_annex_list.json',
                         mime='application/json'
                     )
                 st.session_state['recognize_btn'] = True

@@ -20,20 +20,23 @@ def classify_restruct_agreement(pdf_dict):
 
 
 def classify_statement_court_order(pdf_dict):
+    main_patterns = (
+        'ЗАЯВЛЕНИЕ  о вынесении (о выдаче) судебного приказа о взыскании долга по договору займа',
+        'ЗАЯВЛЕНИЕ о выдаче судебного приказа о взыскании долга по договору займа'
+    )
+
+    other_patterns = ('Выдать судебный приказ о взыскании', 'Вынести судебный приказ о взыскании')
+
     result = []
     with st.spinner('ЗАЯВЛЕНИЕ о выдаче судебного приказа о взыскании долга по договору займа...'):
         for (file_name, pdf_reader), _ in zip(pdf_dict.items(), stqdm(range(len(pdf_dict)))):
 
             pages = get_list_of_pages(pdf_reader)
-            first_page_condition = 'ЗАЯВЛЕНИЕ о выдаче судебного приказа о взыскании долга по договору займа' \
-                                   in pages[0]
-            other_conditions = [
-                pattern_match(pages, c) for c in (
-                    'Выдать судебный приказ о взыскании', 'Выдать судебный приказ о взыскании'
-                )
-            ]
 
-            if first_page_condition and all(other_conditions):
+            first_page_condition = any([p in pages[0] for p in main_patterns])
+            other_conditions = any([pattern_match(pages, c) for c in other_patterns])
+
+            if first_page_condition and other_conditions:
                 result.append(StatementCourtOrder(file_name, pdf_reader))
 
     return result

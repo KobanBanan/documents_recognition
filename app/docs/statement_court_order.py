@@ -44,8 +44,9 @@ class StatementCourtOrder(Document):
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
         court_address = (
                 self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
-                or [first_page_data.split("Взыскатель:", 1)[0]]
+                or self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
         )
+
         contract_number = self.extract(r"№\s*\d+-\d+", first_page_data)
 
         return {
@@ -55,7 +56,8 @@ class StatementCourtOrder(Document):
             "statement_court_order_debtor_birth_date": dates[0] if dates else None,
             "statement_court_order_debtor_passport_full_number": passport[0] if passport else None,
             "statement_court_order_addressee_appellation": addressee_appellation[0] if addressee_appellation else None,
-            "statement_court_order_court_address_string": court_address[0] if court_address else None,
+            "statement_court_order_court_address_string": court_address[0].replace('Адрес:', "").strip()
+            if court_address else None,  # TODO
             "statement_court_order_loan_contract_number": contract_number[0] if contract_number else None,
             "statement_court_order_loan_contract_date": dates[1] if dates else None
         }
