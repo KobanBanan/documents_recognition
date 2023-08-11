@@ -11,6 +11,7 @@ class Document:
     def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader):
         self.file_name = file_name
         self.text_list, self.text = self._get_list_of_pages(pdf_reader)
+        self.pdf_reader = pdf_reader
 
     @staticmethod
     def _get_list_of_pages(reader) -> Tuple[List[str], str]:
