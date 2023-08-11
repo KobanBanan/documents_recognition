@@ -30,7 +30,6 @@ def download_json(json_data):
         f.write(json_data)
 
 
-
 def read_pdf(zf: zipfile.ZipFile):
     result = {}
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
@@ -134,24 +133,8 @@ def main():
                     statement_court_order = st.session_state['statement_court_order']
                     statement_court_order_annex_list = st.session_state['statement_court_order_annex_list']
 
-                if not statement_court_order.empty:
-                    st.dataframe(statement_court_order)
-                    statement_court_order_download = convert_df(statement_court_order)
-                    st.download_button(
-                        "Скачать statement_court_order.csv",
-                        statement_court_order_download,
-                        "statement_court_order.csv",
-                        "text/csv",
-                        key='download-csv'
-                    )
-
-                    st.download_button(
-                        label='Скачать statement_court_order.json',
-                        data=statement_court_order.to_json(orient='records'),
-                        file_name='statement_court_order.json',
-                        mime='application/json'
-                    )
-
+                st.subheader('Заявление на вынесение судебного приказа')
+                st.markdown("---")
                 if not statement_court_order_annex_list.empty:
                     st.dataframe(statement_court_order_annex_list)
                     statement_court_order_annex_list_download = convert_df(statement_court_order_annex_list)
@@ -169,8 +152,27 @@ def main():
                         file_name='statement_court_order_annex_list_download.json',
                         mime='application/json'
                     )
-
                 st.session_state['recognize_btn'] = True
+
+                st.markdown('#')
+
+                if not statement_court_order.empty:
+                    st.dataframe(statement_court_order)
+                    statement_court_order_download = convert_df(statement_court_order)
+                    st.download_button(
+                        "Скачать statement_court_order.csv",
+                        statement_court_order_download,
+                        "statement_court_order.csv",
+                        "text/csv",
+                        key='download-csv'
+                    )
+                    st.download_button(
+                        label='Скачать statement_court_order.json',
+                        data=statement_court_order.to_json(orient='records'),
+                        file_name='statement_court_order.json',
+                        mime='application/json'
+                    )
+                st.markdown("---")
 
 
 if __name__ == '__main__':
