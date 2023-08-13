@@ -1,16 +1,17 @@
 import zipfile
 from io import BytesIO
-from typing import Dict, List
+from typing import List
 
 import PyPDF2
 import ftfy
 import pandas as pd
 import streamlit as st
-from utils import PdfFile
+from pdf2image import convert_from_bytes
+
 from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
-from pdf2image import convert_from_bytes
+from utils import PdfFile
 
 hide_streamlit_style = """
             <style>
