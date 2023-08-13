@@ -3,6 +3,7 @@ from typing import List, Dict
 
 import PyPDF2
 import pandas as pd
+from pyzbar.pyzbar import decode
 from stqdm import stqdm
 
 from .doc import Document
@@ -13,8 +14,9 @@ class StatementCourtOrder(Document):
         "statement_court_order_annex": re.compile(r'Приложение:(.*?)Представитель ООО «Ситиус»'),
     }
 
-    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader):
+    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, images):
         super().__init__(file_name, pdf_reader)
+        self.images = images
 
     def extract_annex(self):
         pattern = self.patterns['statement_court_order_annex']
@@ -42,22 +44,23 @@ class StatementCourtOrder(Document):
         name_full = self.extract(r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', first_page_data)
         dates = self.extract(r'\b\d{2}\.\d{2}\.\d{4}\b', first_page_data)
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
-        court_address = (
-                self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
-                or self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
-        )
+        # court_address = (
+        #        self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
+        #        or self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
+        # )
+        court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
         contract_number = self.extract(r"№\s*\d+-\d+", first_page_data)
+        barcode = decode(self.images[0])
 
         return {
             'statement_court_order_path': self.file_name,
-            "statement_court_order_barcode_value": None,  # TODO бар-код пока что не поддерживается
+            "statement_court_order_barcode_value": barcode[0].data.decode() if barcode else None,
             "statement_court_order_debtor_name_full": name_full[0] if name_full else None,
             "statement_court_order_debtor_birth_date": dates[0] if dates else None,
             "statement_court_order_debtor_passport_full_number": passport[0] if passport else None,
             "statement_court_order_addressee_appellation": addressee_appellation[0] if addressee_appellation else None,
-            "statement_court_order_court_address_string": court_address[0].replace('Адрес:', "").strip()
-            if court_address else None,  # TODO
+            "statement_court_order_court_address_string": court_address[0] if court_address else None,
             "statement_court_order_loan_contract_number": contract_number[0] if contract_number else None,
             "statement_court_order_loan_contract_date": dates[1] if dates else None
         }

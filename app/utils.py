@@ -1,6 +1,10 @@
 import os
 import pathlib
 import re
+from dataclasses import dataclass
+from PIL.PpmImagePlugin import PpmImageFile
+from typing import List
+import PyPDF2
 
 
 def collect_documents(directory):
@@ -28,3 +32,11 @@ def get_list_of_pages(reader):
         text_list.append(page.extract_text().replace('\n', " ").strip())
 
     return text_list
+
+
+@dataclass
+class PdfFile:
+
+    file_name: str
+    pdf_reader: PyPDF2.PdfFileReader
+    images: List[PpmImageFile]

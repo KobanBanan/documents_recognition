@@ -1,15 +1,16 @@
 import zipfile
 from io import BytesIO
-from typing import Dict
+from typing import Dict, List
 
 import PyPDF2
 import ftfy
 import pandas as pd
 import streamlit as st
-
+from utils import PdfFile
 from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
+from pdf2image import convert_from_bytes
 
 hide_streamlit_style = """
             <style>
@@ -30,13 +31,18 @@ def download_json(json_data):
         f.write(json_data)
 
 
-def read_pdf(zf: zipfile.ZipFile):
-    result = {}
+def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
+    result = []
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
     for file in file_list:
         try:
-            result.update(
-                {ftfy.fix_text(zf.getinfo(file.filename).filename): PyPDF2.PdfFileReader(BytesIO(zf.read(file)))})
+            result.append(
+                PdfFile(
+                    ftfy.fix_text(zf.getinfo(file.filename).filename),
+                    PyPDF2.PdfFileReader(BytesIO(zf.read(file))),
+                    convert_from_bytes(zf.read(file_list[0].filename))
+                )
+            )
         except PyPDF2.errors.PdfReadError:
             st.warning(f'Ошибка чтения файла {file.filename}')
 
@@ -65,7 +71,7 @@ def main():
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
 
-        pdf_corpus: Dict[str, PyPDF2.PdfFileReader] = read_pdf(zf)
+        pdf_corpus: List[PdfFile] = read_pdf(zf)
 
         if not pdf_corpus:
             st.warning('В переданном архиве отсутствуют .pdf файлы')
