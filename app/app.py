@@ -1,3 +1,4 @@
+import os
 import zipfile
 from io import BytesIO
 from typing import List
@@ -12,6 +13,8 @@ from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
 from utils import PdfFile
+
+POPPLER_PATH = os.environ.get('POPPLER_PATH')
 
 hide_streamlit_style = """
             <style>
@@ -41,7 +44,8 @@ def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
                 PdfFile(
                     ftfy.fix_text(zf.getinfo(file.filename).filename),
                     PyPDF2.PdfFileReader(BytesIO(zf.read(file))),
-                    convert_from_bytes(zf.read(file_list[0].filename))
+                    convert_from_bytes(zf.read(file_list[0].filename)) if not POPPLER_PATH
+                    else convert_from_bytes(zf.read(file_list[0].filename), poppler_path=POPPLER_PATH)
                 )
             )
         except PyPDF2.errors.PdfReadError:

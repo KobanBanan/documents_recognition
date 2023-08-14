@@ -38,7 +38,7 @@ RUN wget https://poppler.freedesktop.org/poppler-data-0.4.12.tar.gz \
     && ldconfig
 CMD tail -f /dev/null
 
-
+RUN export PATH=/usr/local/bin:${PATH}
 WORKDIR usr/src/app
 
 COPY requirements.txt .

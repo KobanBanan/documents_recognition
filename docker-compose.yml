@@ -5,6 +5,8 @@ services:
     container_name: app
     restart: always
     build: ./app
+    environment:
+      - POPPLER_PATH=/usr/local/bin/
     ports:
       - "8501:8501"
     command: streamlit run app.py --server.maxUploadSize=2048
