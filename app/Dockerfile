@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libfontconfig-dev \
     libjpeg-dev \
-    libopenjp2-7-dev
+    libopenjp2-7-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://poppler.freedesktop.org/poppler-data-0.4.9.tar.gz \
