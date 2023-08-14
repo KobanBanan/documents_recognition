@@ -8,7 +8,6 @@ RUN apt-get update && apt-get install -y \
     git \
     libzbar0 \
     poppler-utils \
-    libpoppler-cpp-dev\
     pkg-config\
     python-dev\
     && rm -rf /var/lib/apt/lists/*
@@ -18,6 +17,5 @@ WORKDIR usr/src/app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install pillow python-poppler
 
 COPY . .

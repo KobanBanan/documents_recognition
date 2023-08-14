@@ -71,8 +71,12 @@ def main():
     uploaded_zip = st.file_uploader('Загрузите архив', type="zip", key='uploaded_zip')
     if uploaded_zip:
         zf = zipfile.ZipFile(uploaded_zip)
-
-        pdf_corpus: List[PdfFile] = read_pdf(zf)
+        with st.spinner('Чтение арихва...'):
+            if not st.session_state.get('pdf_corpus'):
+                pdf_corpus: List[PdfFile] = read_pdf(zf)
+                st.session_state['pdf_corpus'] = pdf_corpus
+            else:
+                pdf_corpus = st.session_state['pdf_corpus']
 
         if not pdf_corpus:
             st.warning('В переданном архиве отсутствуют .pdf файлы')
