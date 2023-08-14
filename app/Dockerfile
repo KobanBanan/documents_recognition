@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y \
     git \
     libzbar0 \
     poppler-utils \
+    libpoppler-cpp-dev\
+    pkg-config\
+    python-dev\
     && rm -rf /var/lib/apt/lists/*
 
 
