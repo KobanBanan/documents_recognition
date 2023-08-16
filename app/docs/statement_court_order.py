@@ -14,9 +14,9 @@ class StatementCourtOrder(Document):
         "statement_court_order_annex": re.compile(r'Приложение:(.*?)Представитель ООО «Ситиус»'),
     }
 
-    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, images):
+    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, image):
         super().__init__(file_name, pdf_reader)
-        self.images = images
+        self.image = image
 
     def extract_annex(self):
         pattern = self.patterns['statement_court_order_annex']
@@ -51,11 +51,11 @@ class StatementCourtOrder(Document):
         court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
         contract_number = self.extract(r"№\s*\d+-\d+", first_page_data)
-        # barcode = decode(self.images[0])
+        barcode = decode(self.image)
 
         return {
             'statement_court_order_path': self.file_name,
-            "statement_court_order_barcode_value": None,
+            "statement_court_order_barcode_value": barcode[0].data.decode() if barcode else None,
             "statement_court_order_debtor_name_full": name_full[0] if name_full else None,
             "statement_court_order_debtor_birth_date": dates[0] if dates else None,
             "statement_court_order_debtor_passport_full_number": passport[0] if passport else None,

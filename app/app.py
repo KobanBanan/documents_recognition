@@ -11,7 +11,7 @@ import streamlit as st
 from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
-from utils import PdfFile
+from utils import PdfFile, extract_image
 
 POPPLER_PATH = os.environ.get('POPPLER_PATH')
 print(f'POPPLER_PATH: {POPPLER_PATH}')
@@ -44,7 +44,7 @@ def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
                 PdfFile(
                     ftfy.fix_text(zf.getinfo(file.filename).filename),
                     PyPDF2.PdfFileReader(BytesIO(zf.read(file))),
-                    None
+                    extract_image(zf, file.filename, POPPLER_PATH)
                 )
             )
         except PyPDF2.errors.PdfReadError:

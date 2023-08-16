@@ -1,10 +1,15 @@
 import os
 import pathlib
 import re
+from copy import deepcopy
 from dataclasses import dataclass
-from PIL.PpmImagePlugin import PpmImageFile
 from typing import List
+
 import PyPDF2
+import streamlit as st
+from PIL.PpmImagePlugin import PpmImageFile
+from pdf2image import convert_from_bytes
+from zipfile import ZipFile
 
 
 def collect_documents(directory):
@@ -34,9 +39,20 @@ def get_list_of_pages(reader):
     return text_list
 
 
+def extract_image(zf: ZipFile, file_name: str, poppler_path: str):
+    try:
+        result = convert_from_bytes(zf.read(file_name)) if not poppler_path \
+            else convert_from_bytes(zf.read(file_name), poppler_path=poppler_path)
+
+        first_image = deepcopy(result[0])
+        del result
+        return first_image
+    except Exception as e:
+        st.warning(f'Ошибка обработки файла {file_name}')
+
+
 @dataclass
 class PdfFile:
-
     file_name: str
     pdf_reader: PyPDF2.PdfFileReader
     images: List[PpmImageFile]
