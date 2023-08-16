@@ -7,7 +7,6 @@ import PyPDF2
 import ftfy
 import pandas as pd
 import streamlit as st
-from pdf2image import convert_from_bytes
 
 from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
@@ -45,8 +44,7 @@ def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
                 PdfFile(
                     ftfy.fix_text(zf.getinfo(file.filename).filename),
                     PyPDF2.PdfFileReader(BytesIO(zf.read(file))),
-                    convert_from_bytes(zf.read(file_list[0].filename)) if not POPPLER_PATH
-                    else convert_from_bytes(zf.read(file_list[0].filename), poppler_path=POPPLER_PATH)
+                    None
                 )
             )
         except PyPDF2.errors.PdfReadError:
