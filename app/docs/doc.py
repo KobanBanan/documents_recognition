@@ -32,5 +32,13 @@ class Document:
         result = re.findall(pattern, text, re.IGNORECASE)
         return result or self.DEFAULT_EXTRACT_VAlUE
 
+    def extract_mass(self, pattern_list: List[str], text):
+        for pattern in pattern_list:
+            res = self.extract(pattern, text)
+            if res:
+                return res
+
+        return self.DEFAULT_EXTRACT_VAlUE
+
     def parse_document(self):
         pass

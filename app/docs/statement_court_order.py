@@ -50,7 +50,8 @@ class StatementCourtOrder(Document):
         # )
         court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
-        contract_number = self.extract(r"№\s*\d+-\d+", first_page_data)
+        contract_number = self.extract_mass([r"№\s*\d+-\d+", 'Договор займа\)(.*?)от'], first_page_data)
+
         barcode = decode(self.image)
 
         return {
