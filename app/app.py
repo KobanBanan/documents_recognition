@@ -14,7 +14,6 @@ from document_classification import classify_documents
 from utils import PdfFile, extract_image
 
 POPPLER_PATH = os.environ.get('POPPLER_PATH')
-print(f'POPPLER_PATH: {POPPLER_PATH}')
 
 hide_streamlit_style = """
             <style>
