@@ -38,6 +38,12 @@ class StatementCourtOrder(Document):
         return result
         # noinspection PyTypeChecker
 
+    def get_barcode(self):
+        try:
+            return decode(self.image)
+        except TypeError:
+            return None
+
     def collect_annex_list(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
@@ -52,7 +58,7 @@ class StatementCourtOrder(Document):
 
         contract_number = self.extract_mass([r"№\s*\d+-\d+", r'Договор займа\)(.*?)от'], first_page_data)
 
-        barcode = decode(self.image)
+        barcode = self.get_barcode()
 
         return {
             'statement_court_order_path': self.file_name,
