@@ -27,8 +27,7 @@ def classify_statement_court_order(pdf_list: List[PdfFile]):
 
     other_patterns = (
         'Выдать судебный приказ о взыскании',
-        'Вынести судебный приказ о взыскании',
-
+        'Вынести судебный приказ о взыскании'
     )
 
     result = []

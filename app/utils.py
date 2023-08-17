@@ -4,12 +4,12 @@ import re
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import List
+from zipfile import ZipFile
 
 import PyPDF2
 import streamlit as st
 from PIL.PpmImagePlugin import PpmImageFile
 from pdf2image import convert_from_bytes
-from zipfile import ZipFile
 
 
 def collect_documents(directory):
@@ -34,7 +34,7 @@ def get_list_of_pages(reader):
     num_pages = len(reader.pages)
     for page_number in range(num_pages):
         page = reader.pages[page_number]
-        text_list.append(page.extract_text().replace('\n', " ").strip())
+        text_list.append(re.sub(r'\s+', ' ', page.extract_text().replace('\n', " ")).strip())
 
     return text_list
 
