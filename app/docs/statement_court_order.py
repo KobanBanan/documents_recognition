@@ -23,7 +23,7 @@ class StatementCourtOrder(Document):
         result = re.findall(pattern, self.text)
         return result[0] if result else self.DEFAULT_EXTRACT_VAlUE
 
-    def parse_document(self) -> List[Dict]:
+    def collect_annex_list(self) -> List[Dict]:
         result = []
         annex = self.extract_annex().strip()
         bullet_points = re.split(r'\s*\d+\.\s', annex)
@@ -44,7 +44,7 @@ class StatementCourtOrder(Document):
         except TypeError:
             return None
 
-    def collect_annex_list(self):
+    def parse_document(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
         name_full = self.extract(r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', first_page_data)
@@ -73,19 +73,19 @@ class StatementCourtOrder(Document):
         }
 
 
-def collect_statement_court_order(doc_list: List[StatementCourtOrder]):
-    result = []
-    # noinspection PyTypeChecker
-    for doc, _ in zip(doc_list, stqdm(range(len(doc_list)))):  # type: StatementCourtOrder
-        result.extend(doc.parse_document())
-
-    return pd.DataFrame(result)
-
-
 def collect_statement_court_order_annex_list(doc_list: List[StatementCourtOrder]):
     result = []
     # noinspection PyTypeChecker
     for doc, _ in zip(doc_list, stqdm(range(len(doc_list)))):  # type: StatementCourtOrder
-        result.append(doc.collect_annex_list())
+        result.extend(doc.collect_annex_list())
+
+    return pd.DataFrame(result)
+
+
+def collect_statement_court_order(doc_list: List[StatementCourtOrder]):
+    result = []
+    # noinspection PyTypeChecker
+    for doc, _ in zip(doc_list, stqdm(range(len(doc_list)))):  # type: StatementCourtOrder
+        result.append(doc.parse_document())
 
     return pd.DataFrame(result)

@@ -40,5 +40,5 @@ class Document:
 
         return self.DEFAULT_EXTRACT_VAlUE
 
-    def parse_document(self):
+    def collect_annex_list(self):
         pass

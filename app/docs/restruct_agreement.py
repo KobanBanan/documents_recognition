@@ -72,7 +72,7 @@ class RestructAgreement(Document):
     def contract_number(self):
         return self._extract_contract_number()
 
-    def parse_document(self):
+    def collect_annex_list(self):
         dates = self.dates
         return {
             "file": self.file_name,
@@ -95,6 +95,6 @@ def collect_restruct_agreement_data(doc_list: List[RestructAgreement]):
 
     # noinspection PyTypeChecker
     for doc, _ in zip(doc_list, stqdm(range(len(doc_list)))):  # type: RestructAgreement
-        result.append(doc.parse_document())
+        result.append(doc.collect_annex_list())
 
     return pd.DataFrame(result)

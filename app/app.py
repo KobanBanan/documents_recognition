@@ -136,15 +136,15 @@ def main():
             with st.spinner('Распознавание документов "Заявление о выдаче '
                             'судебного приказа о взыскании долга по договору займа..."'):
                 if not isinstance(st.session_state.get('statement_court_order'), pd.DataFrame):
-                    statement_court_order = collect_statement_court_order(classified_documents['statement_court_order'])
-                    statement_court_order_annex_list = collect_statement_court_order_annex_list(
+                    statement_court_order_annex_list = collect_statement_court_order_annex_list(classified_documents['statement_court_order'])
+                    statement_court_order = collect_statement_court_order(
                         classified_documents['statement_court_order']
                     )
-                    st.session_state['statement_court_order'] = statement_court_order
                     st.session_state['statement_court_order_annex_list'] = statement_court_order_annex_list
+                    st.session_state['statement_court_order'] = statement_court_order
                 else:
-                    statement_court_order = st.session_state['statement_court_order']
                     statement_court_order_annex_list = st.session_state['statement_court_order_annex_list']
+                    statement_court_order = st.session_state['statement_court_order']
 
                 st.subheader('Заявление на вынесение судебного приказа')
                 st.markdown("---")
