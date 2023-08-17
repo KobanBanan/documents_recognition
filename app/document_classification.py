@@ -40,7 +40,7 @@ def classify_statement_court_order(pdf_list: List[PdfFile]):
             other_conditions = any([pattern_match(pages, c) for c in other_patterns])
 
             if first_page_condition and other_conditions:
-                result.append(StatementCourtOrder(pdf.file_name, pdf.pdf_reader, pdf.images))
+                result.append(StatementCourtOrder(pdf.file_name, pdf.pdf_reader, pdf.pdf_bytes))
 
     return result
 

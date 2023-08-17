@@ -1,8 +1,12 @@
+import os
 import re
+from copy import deepcopy
 from typing import List, Dict
 
 import PyPDF2
 import pandas as pd
+import streamlit as st
+from pdf2image import convert_from_bytes
 from pyzbar.pyzbar import decode
 from stqdm import stqdm
 
@@ -14,14 +18,26 @@ class StatementCourtOrder(Document):
         "statement_court_order_annex": re.compile(r'Приложение:(.*?)Представитель ООО «Ситиус»'),
     }
 
-    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, image):
+    def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, pdf_bytes: bytes):
         super().__init__(file_name, pdf_reader)
-        self.image = image
+        self.image = self._extract_image(pdf_bytes, os.environ.get('POPPLER_PATH'))
 
     def extract_annex(self):
         pattern = self.patterns['statement_court_order_annex']
         result = re.findall(pattern, self.text)
         return result[0] if result else self.DEFAULT_EXTRACT_VAlUE
+
+    @staticmethod
+    def _extract_image(pdf_bytes: bytes, poppler_path: str):
+        try:
+            result = convert_from_bytes(pdf_bytes) if not poppler_path \
+                else convert_from_bytes(pdf_bytes, poppler_path=poppler_path)
+
+            first_image = deepcopy(result[0])
+            del result
+            return first_image
+        except Exception:
+            return
 
     def collect_annex_list(self) -> List[Dict]:
         result = []
@@ -42,6 +58,7 @@ class StatementCourtOrder(Document):
         try:
             return decode(self.image)
         except TypeError:
+            st.warning(f"Ошибка извлечения bar-code'а {self.file_name}")
             return None
 
     def parse_document(self):
