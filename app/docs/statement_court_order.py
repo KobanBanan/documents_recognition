@@ -64,7 +64,7 @@ class StatementCourtOrder(Document):
     def parse_document(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
-        name_full = self.extract(r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', first_page_data)
+        name_full = self.extract_mass((r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', r"Должник:(.*?)Паспорт"), first_page_data)
         dates = self.extract(r'\b\d{2}\.\d{2}\.\d{4}\b', first_page_data)
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
         # court_address = (
@@ -73,14 +73,14 @@ class StatementCourtOrder(Document):
         # )
         court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
-        contract_number = self.extract_mass([r"№\s*\d+-\d+", r'Договор займа\)(.*?)от'], first_page_data)
+        contract_number = self.extract_mass((r"№\s*\d+-\d+", r'Договор займа\)(.*?)от'), first_page_data)
 
         barcode = self.get_barcode()
 
         return {
             'statement_court_order_path': self.file_name,
             "statement_court_order_barcode_value": barcode[0].data.decode() if barcode else None,
-            "statement_court_order_debtor_name_full": name_full[0] if name_full else None,
+            "statement_court_order_debtor_name_full": name_full[0].strip() if name_full else None,
             "statement_court_order_debtor_birth_date": dates[0] if dates else None,
             "statement_court_order_debtor_passport_full_number": passport[0] if passport else None,
             "statement_court_order_addressee_appellation": addressee_appellation[0] if addressee_appellation else None,

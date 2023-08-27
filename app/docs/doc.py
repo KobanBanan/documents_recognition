@@ -1,5 +1,5 @@
 import re
-from typing import Tuple, List, Dict
+from typing import Tuple, Iterable, Dict
 
 import PyPDF2
 
@@ -32,7 +32,7 @@ class Document:
         result = re.findall(pattern, text, re.IGNORECASE)
         return result or self.DEFAULT_EXTRACT_VAlUE
 
-    def extract_mass(self, pattern_list: List[str], text):
+    def extract_mass(self, pattern_list: Iterable[str], text):
         for pattern in pattern_list:
             res = self.extract(pattern, text)
             if res:
