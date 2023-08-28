@@ -14,7 +14,7 @@ class Document:
         self.pdf_reader = pdf_reader
 
     @staticmethod
-    def _get_list_of_pages(reader) -> Tuple[List[str], str]:
+    def _get_list_of_pages(reader) -> Tuple[Iterable[str], str]:
         text_list = []
         num_pages = len(reader.pages)
         for page_number in range(num_pages):
