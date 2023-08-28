@@ -11,6 +11,7 @@ from pyzbar.pyzbar import decode
 from stqdm import stqdm
 
 from .doc import Document
+from .utils import collect_garbage
 
 
 class StatementCourtOrder(Document):
@@ -39,6 +40,7 @@ class StatementCourtOrder(Document):
         except Exception:
             return
 
+    @collect_garbage
     def collect_annex_list(self) -> List[Dict]:
         result = []
         annex = self.extract_annex().strip()
@@ -56,21 +58,23 @@ class StatementCourtOrder(Document):
 
     def get_barcode(self):
         try:
-            return decode(self.image)
+            return decode(self.image)[0].data.decode()
         except TypeError:
             st.warning(f"Ошибка извлечения bar-code'а {self.file_name}")
             return None
 
+    @collect_garbage
     def parse_document(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
-        name_full = self.extract_mass((r'([А-ЯЁ][а-яё]+\s[А-ЯЁ]\.[А-ЯЁ]\.)', r"Должник:(.*?)Паспорт"), first_page_data)
-        dates = self.extract(r'\b\d{2}\.\d{2}\.\d{4}\b', first_page_data)
+        name_full = self.extract(r"Должник:(.*?)Паспорт", first_page_data)
+        dates = self.extract(
+            r'\b\d{2}\.\d{2}\.\d{4}\b',
+            first_page_data,
+            return_first_match=False,
+            return_value=[None, None]
+        )
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
-        # court_address = (
-        #        self.extract(r'Адрес:\s\d+,\s[^,]+,\s[^,]+,\s[^,]+,\s[^,]+(?=\sВзыскатель)', first_page_data)
-        #        or self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
-        # )
         court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
         contract_number = self.extract_mass((r"№\s*\d+-\d+", r'Договор займа\)(.*?)от'), first_page_data)
@@ -79,14 +83,14 @@ class StatementCourtOrder(Document):
 
         return {
             'statement_court_order_path': self.file_name,
-            "statement_court_order_barcode_value": barcode[0].data.decode() if barcode else None,
-            "statement_court_order_debtor_name_full": name_full[0].strip() if name_full else None,
-            "statement_court_order_debtor_birth_date": dates[0] if dates else None,
-            "statement_court_order_debtor_passport_full_number": passport[0] if passport else None,
-            "statement_court_order_addressee_appellation": addressee_appellation[0] if addressee_appellation else None,
-            "statement_court_order_court_address_string": court_address[0] if court_address else None,
-            "statement_court_order_loan_contract_number": contract_number[0] if contract_number else None,
-            "statement_court_order_loan_contract_date": dates[1] if dates else None
+            "statement_court_order_barcode_value": barcode,
+            "statement_court_order_debtor_name_full": name_full,
+            "statement_court_order_debtor_birth_date": dates[0],
+            "statement_court_order_debtor_passport_full_number": passport,
+            "statement_court_order_addressee_appellation": addressee_appellation,
+            "statement_court_order_court_address_string": court_address,
+            "statement_court_order_loan_contract_number": contract_number,
+            "statement_court_order_loan_contract_date": dates[1]
         }
 
 

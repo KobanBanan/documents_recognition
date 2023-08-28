@@ -2,7 +2,7 @@ import os
 import pathlib
 import re
 from dataclasses import dataclass
-from zipfile import ZipFile
+
 
 import PyPDF2
 

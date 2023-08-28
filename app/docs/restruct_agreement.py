@@ -35,22 +35,19 @@ class RestructAgreement(Document):
 
     def _extract_city(self):
         pattern = self.patterns['restruct_agreement_city']
-
-        result = self.extract(pattern, self.text_list[0])
-        return result[0] if result else result
+        return self.extract(pattern, self.text_list[0])
 
     def _extract_dates(self):
         pattern = r'\d{2}\.\d{2}\.\d{4}'
-        return self.extract(pattern, self.text_list[0]) or [None, None, None]
+        return self.extract(pattern, self.text_list[0], return_first_match=False) or [None, None, None]
 
     def _extract_names(self):
         pattern = r'([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+)'
-        return self.extract(pattern, self.text_list[0]) or [None, None]
+        return self.extract(pattern, self.text_list[0], return_first_match=False) or [None, None]
 
     def _extract_contract_number(self):
         pattern = self.patterns['restruct_agreement_contract_number']
-        matches = self.extract(pattern, self.text_list[0])
-        return matches[0] if matches else matches
+        return self.extract(pattern, self.text_list[0])
 
     @property
     def city(self):

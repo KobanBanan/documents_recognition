@@ -28,9 +28,11 @@ class Document:
         res.update({'file': self.file_name})
         return res
 
-    def extract(self, pattern, text):
+    def extract(self, pattern, text, return_first_match=True, return_value=None):
         result = re.findall(pattern, text, re.IGNORECASE)
-        return result or self.DEFAULT_EXTRACT_VAlUE
+        if return_first_match:
+            return result[0].strip() if result else self.DEFAULT_EXTRACT_VAlUE
+        return result or (return_value or self.DEFAULT_EXTRACT_VAlUE)
 
     def extract_mass(self, pattern_list: Iterable[str], text):
         for pattern in pattern_list:
