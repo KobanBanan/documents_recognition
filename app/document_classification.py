@@ -51,7 +51,8 @@ def classify_documents(pdf_list: List[PdfFile]):
     :return:
     """
 
-    restruct_agreement = classify_restruct_agreement(pdf_list)
+    # restruct_agreement = classify_restruct_agreement(pdf_list)
+    restruct_agreement = []
     statement_court_order = classify_statement_court_order(pdf_list)
 
     classified = [r.file_name for r in restruct_agreement] + [s.file_name for s in statement_court_order]
