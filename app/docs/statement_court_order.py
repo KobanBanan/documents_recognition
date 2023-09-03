@@ -77,7 +77,8 @@ class StatementCourtOrder(Document):
         addressee_appellation = self.extract(r'(.*?)\s*Адрес:', first_page_data)
         court_address = self.extract(r"Адрес:([\s\S]+?)Взыскатель:", first_page_data)
 
-        contract_number = self.extract_mass((r"№\s*\d+-\d+", r'Договор займа\)(.*?)от'), first_page_data)
+        contract_number = self.extract_mass((r"№\s*\d+-\d+", r'договору потребительского займа(.*?)от',
+                                             r'Договор займа\)(.*?)от'), first_page_data)
 
         barcode = self.get_barcode()
 
