@@ -16,7 +16,10 @@ from .utils import collect_garbage
 
 class StatementCourtOrder(Document):
     patterns = {
-        "statement_court_order_annex": re.compile(r'Приложение:(.*?)Представитель ООО «Ситиус»'),
+        "statement_court_order_annex": re.compile(
+            r'Приложение:(.*?)(?=\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\. '
+            r'Представитель ООО «Ситиус»|\sПредставитель ООО «Ситиус»|\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\.)'
+        )
     }
 
     def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, pdf_bytes: bytes):
