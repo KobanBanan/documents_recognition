@@ -159,7 +159,7 @@ def main():
                 st.subheader('Заявление на вынесение судебного приказа')
 
                 st.markdown("---")
-                st.markdown('##### список приложений')
+                st.markdown('##### Список приложений')
                 if not statement_court_order_annex_list.empty:
                     st.dataframe(statement_court_order_annex_list)
                     statement_court_order_annex_list_download = convert_df(statement_court_order_annex_list)
@@ -180,7 +180,7 @@ def main():
                 st.session_state['recognize_btn'] = True
 
                 st.markdown("---")
-                st.markdown('##### cодержимое заявлений')
+                st.markdown('##### Содержимое заявлений')
                 if not statement_court_order.empty:
                     st.dataframe(statement_court_order)
                     statement_court_order_download = convert_df(statement_court_order)
@@ -199,7 +199,7 @@ def main():
                     )
 
                 st.markdown("---")
-                st.markdown('##### ошибки')
+                st.markdown('##### Ошибки')
                 if not statement_court_order_errors.empty:
                     with st.expander('[ОШИБКИ]: Заявление на вынесение судебного приказа'):
                         st.write(statement_court_order_errors)
