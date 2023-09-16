@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 import PyPDF2
 import pandas as pd
@@ -10,7 +10,7 @@ from pdf2image import convert_from_bytes
 from pyzbar.pyzbar import decode
 from stqdm import stqdm
 
-from .doc import Document
+from .doc import Document, RecognitionResult
 from .utils import collect_garbage
 
 
@@ -64,6 +64,7 @@ class StatementCourtOrder(Document):
             return decode(self.image)[0].data.decode()
         except (TypeError, IndexError):
             st.warning(f"Ошибка извлечения bar-code'а {self.file_name}")
+            self.error = True
             return None
 
     @collect_garbage
@@ -107,10 +108,11 @@ def collect_statement_court_order_annex_list(doc_list: List[StatementCourtOrder]
     return pd.DataFrame(result)
 
 
-def collect_statement_court_order(doc_list: List[StatementCourtOrder]):
+def collect_statement_court_order(doc_list: List[StatementCourtOrder]) -> Tuple[pd.DataFrame, pd.DataFrame]:
     result = []
     # noinspection PyTypeChecker
     for doc, _ in zip(doc_list, stqdm(range(len(doc_list)))):  # type: StatementCourtOrder
-        result.append(doc.parse_document())
+        recognition_result = doc.parse_document()
+        result.append(RecognitionResult(doc.file_name, recognition_result, doc.error))
 
-    return pd.DataFrame(result)
+    return pd.DataFrame([r.recognition_result for r in result]), pd.DataFrame([r.doc_name for r in result if r.error])

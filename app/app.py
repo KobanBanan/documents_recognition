@@ -1,7 +1,7 @@
 import os
 import zipfile
 from io import BytesIO
-from typing import List
+from typing import List, Tuple
 
 import PyPDF2
 import ftfy
@@ -12,7 +12,6 @@ from docs import collect_statement_court_order, \
     collect_statement_court_order_annex_list
 from document_classification import classify_documents
 from utils import PdfFile
-
 
 hide_streamlit_style = """
             <style>
@@ -33,8 +32,9 @@ def download_json(json_data):
         f.write(json_data)
 
 
-def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
+def read_pdf(zf: zipfile.ZipFile) -> Tuple[List[PdfFile], List[str]]:
     result = []
+    errors = []
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
     for file in file_list:
         try:
@@ -47,8 +47,9 @@ def read_pdf(zf: zipfile.ZipFile) -> List[PdfFile]:
             )
         except PyPDF2.errors.PdfReadError:
             st.warning(f'Ошибка чтения файла {file.filename}')
+            errors.append(file.filename)
 
-    return result
+    return result, errors
 
 
 def main():
@@ -74,14 +75,20 @@ def main():
         zf = zipfile.ZipFile(uploaded_zip)
         with st.spinner('Чтение арихва и подготовка данных...'):
             if not st.session_state.get('pdf_corpus'):
-                pdf_corpus: List[PdfFile] = read_pdf(zf)
+                pdf_corpus, error_list = read_pdf(zf)
                 st.session_state['pdf_corpus'] = pdf_corpus
+                st.session_state['error_list'] = error_list
             else:
                 pdf_corpus = st.session_state['pdf_corpus']
+                error_list = st.session_state['error_list']
 
         if not pdf_corpus:
             st.warning('В переданном архиве отсутствуют .pdf файлы')
             return
+
+        if error_list:
+            with st.expander('Непрочитанные файлы'):
+                st.write(error_list)
 
         with st.spinner('Классификация документов..'):
             if not st.session_state.get('classified_documents'):
@@ -135,18 +142,24 @@ def main():
             with st.spinner('Распознавание документов "Заявление о выдаче '
                             'судебного приказа о взыскании долга по договору займа..."'):
                 if not isinstance(st.session_state.get('statement_court_order'), pd.DataFrame):
-                    statement_court_order_annex_list = collect_statement_court_order_annex_list(classified_documents['statement_court_order'])
-                    statement_court_order = collect_statement_court_order(
+                    statement_court_order_annex_list = collect_statement_court_order_annex_list(
+                        classified_documents['statement_court_order'])
+
+                    statement_court_order, statement_court_order_errors = collect_statement_court_order(
                         classified_documents['statement_court_order']
                     )
                     st.session_state['statement_court_order_annex_list'] = statement_court_order_annex_list
                     st.session_state['statement_court_order'] = statement_court_order
+                    st.session_state['statement_court_order_errors'] = statement_court_order_errors
                 else:
                     statement_court_order_annex_list = st.session_state['statement_court_order_annex_list']
                     statement_court_order = st.session_state['statement_court_order']
+                    statement_court_order_errors = st.session_state['statement_court_order_errors']
 
                 st.subheader('Заявление на вынесение судебного приказа')
+
                 st.markdown("---")
+                st.markdown('#### список приложений')
                 if not statement_court_order_annex_list.empty:
                     st.dataframe(statement_court_order_annex_list)
                     statement_court_order_annex_list_download = convert_df(statement_court_order_annex_list)
@@ -166,8 +179,8 @@ def main():
                     )
                 st.session_state['recognize_btn'] = True
 
-                st.markdown('#')
-
+                st.markdown("---")
+                st.markdown('#### содержимое заявлений')
                 if not statement_court_order.empty:
                     st.dataframe(statement_court_order)
                     statement_court_order_download = convert_df(statement_court_order)
@@ -184,6 +197,19 @@ def main():
                         file_name='statement_court_order.json',
                         mime='application/json'
                     )
+
+                if not statement_court_order_errors.empty:
+                    with st.expander('[ОШИБКИ]: Заявление на вынесение судебного приказа'):
+                        st.write(statement_court_order_errors)
+                        statement_court_order_errors_download = convert_df(statement_court_order_errors)
+                        st.download_button(
+                            "Скачать statement_court_order_errors_errors.csv",
+                            statement_court_order_errors_download,
+                            "statement_court_order_errors.csv",
+                            "text/csv",
+                            key='download-csv'
+                        )
+
                 st.markdown("---")
 
 

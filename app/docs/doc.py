@@ -1,7 +1,15 @@
 import re
 from typing import Tuple, Iterable, Dict
-
+from dataclasses import dataclass
 import PyPDF2
+import pandas as pd
+
+
+@dataclass
+class RecognitionResult:
+    doc_name: str
+    recognition_result: Dict
+    error: True
 
 
 class Document:
@@ -12,6 +20,7 @@ class Document:
         self.file_name = file_name
         self.text_list, self.text = self._get_list_of_pages(pdf_reader)
         self.pdf_reader = pdf_reader
+        self.error = False
 
     @staticmethod
     def _get_list_of_pages(reader) -> Tuple[Iterable[str], str]:
