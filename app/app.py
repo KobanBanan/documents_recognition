@@ -199,6 +199,7 @@ def main():
                     )
 
                 st.markdown("---")
+                st.markdown('##### ошибки')
                 if not statement_court_order_errors.empty:
                     with st.expander('[ОШИБКИ]: Заявление на вынесение судебного приказа'):
                         st.write(statement_court_order_errors)
