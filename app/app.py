@@ -159,12 +159,12 @@ def main():
                 st.subheader('Заявление на вынесение судебного приказа')
 
                 st.markdown("---")
-                st.markdown('#### список приложений')
+                st.markdown('##### список приложений')
                 if not statement_court_order_annex_list.empty:
                     st.dataframe(statement_court_order_annex_list)
                     statement_court_order_annex_list_download = convert_df(statement_court_order_annex_list)
                     st.download_button(
-                        "Скачать statement_court_order_annex_list",
+                        "Скачать statement_court_order_annex_list.csv",
                         statement_court_order_annex_list_download,
                         "statement_court_order_annex_list.csv",
                         "text/csv",
@@ -180,7 +180,7 @@ def main():
                 st.session_state['recognize_btn'] = True
 
                 st.markdown("---")
-                st.markdown('#### содержимое заявлений')
+                st.markdown('##### cодержимое заявлений')
                 if not statement_court_order.empty:
                     st.dataframe(statement_court_order)
                     statement_court_order_download = convert_df(statement_court_order)
@@ -198,19 +198,18 @@ def main():
                         mime='application/json'
                     )
 
+                st.markdown("---")
                 if not statement_court_order_errors.empty:
                     with st.expander('[ОШИБКИ]: Заявление на вынесение судебного приказа'):
                         st.write(statement_court_order_errors)
                         statement_court_order_errors_download = convert_df(statement_court_order_errors)
                         st.download_button(
-                            "Скачать statement_court_order_errors_errors.csv",
+                            "Скачать statement_court_order_errors.csv",
                             statement_court_order_errors_download,
                             "statement_court_order_errors.csv",
                             "text/csv",
                             key='download-csv'
                         )
-
-                st.markdown("---")
 
 
 if __name__ == '__main__':
