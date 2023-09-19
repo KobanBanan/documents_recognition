@@ -63,7 +63,6 @@ class StatementCourtOrder(Document):
         try:
             return decode(self.image)[0].data.decode()
         except (TypeError, IndexError):
-            st.warning(f"Ошибка извлечения bar-code'а {self.file_name}")
             self.error = True
             return None
 

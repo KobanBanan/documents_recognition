@@ -46,7 +46,6 @@ def read_pdf(zf: zipfile.ZipFile) -> Tuple[List[PdfFile], List[str]]:
                 )
             )
         except PyPDF2.errors.PdfReadError:
-            st.warning(f'Ошибка чтения файла {file.filename}')
             errors.append(file.filename)
 
     return result, errors
@@ -87,6 +86,7 @@ def main():
             return
 
         if error_list:
+            st.warning('Внимание! Присутствуют ошибки разбора')
             with st.expander('Непрочитанные файлы'):
                 st.write(error_list)
 
@@ -98,7 +98,7 @@ def main():
                 classified_documents = st.session_state['classified_documents']
 
         classified_documents_ = classified_documents.get('classified')
-
+        st.markdown('#')
         if classified_documents.get('unclassified'):
             with st.expander('Неклассифицированные документы'):
                 unclassified_documents = classified_documents['unclassified']
