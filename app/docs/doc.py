@@ -1,8 +1,8 @@
 import re
-from typing import Tuple, Iterable, Dict
 from dataclasses import dataclass
+from typing import Tuple, Iterable, Dict
+
 import PyPDF2
-import pandas as pd
 
 
 @dataclass
@@ -28,7 +28,7 @@ class Document:
         num_pages = len(reader.pages)
         for page_number in range(num_pages):
             page = reader.pages[page_number]
-            text_list.append(page.extract_text().replace('\n', " ").strip())
+            text_list.append(re.sub(r'\s+', ' ', page.extract_text().replace('\n', " ").strip()))
 
         return text_list, " ".join(text_list)
 

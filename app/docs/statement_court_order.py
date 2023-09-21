@@ -70,7 +70,7 @@ class StatementCourtOrder(Document):
     def parse_document(self):
         first_page_data = self.text_list[0]
         passport = self.extract(r'Паспорт: серия \d+ № \d+', first_page_data)
-        name_full = self.extract(r"Должник:(.*?)Паспорт", first_page_data)
+        name_full = self.extract_mass([r"Должник:(.*?)Паспорт", r"До лжник:(.*?)Паспорт"], first_page_data)
         dates = self.extract(
             r'\b\d{2}\.\d{2}\.\d{4}\b',
             first_page_data,
