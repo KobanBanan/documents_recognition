@@ -1,3 +1,4 @@
+import gc
 import zipfile
 from io import BytesIO
 from typing import List, Tuple
@@ -21,6 +22,16 @@ hide_streamlit_style = """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 
+# Function to clear session state and all memory
+def clear_memory():
+    st.session_state.clear()
+
+
+# Add a button to the sidebar for clearing memory
+st.sidebar.info('При нажатии сессия будет очищена и все данные будут удалены')
+st.sidebar.button("Clear Memory", on_click=clear_memory)
+
+
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
@@ -37,15 +48,18 @@ def read_pdf(zf: zipfile.ZipFile) -> Tuple[List[PdfFile], List[str]]:
     file_list = [file for file in zf.filelist if file.filename.endswith('.pdf')]
     for file in file_list:
         try:
-            result.append(
-                PdfFile(
-                    ftfy.fix_text(zf.getinfo(file.filename).filename),
-                    PyPDF2.PdfFileReader(BytesIO(zf.read(file))),
-                    zf.read(zf.getinfo(file.filename).filename)
+            with zf.open(file.filename) as pdf_file:
+                pdf_data = pdf_file.read()
+                result.append(
+                    PdfFile(
+                        ftfy.fix_text(file.filename),
+                        PyPDF2.PdfFileReader(BytesIO(pdf_data)),
+                        pdf_data
+                    )
                 )
-            )
-        except PyPDF2.errors.PdfReadError:
+        except PyPDF2.errors.PdfReadError as e:
             errors.append(file.filename)
+            print(f"Error reading {file.filename}: {str(e)}")
 
     return result, errors
 
