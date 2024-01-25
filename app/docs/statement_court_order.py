@@ -17,8 +17,7 @@ from .utils import collect_garbage
 class StatementCourtOrder(Document):
     patterns = {
         "statement_court_order_annex": re.compile(
-            r'Приложение:(.*?)(?=\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\. '
-            r'Представитель ООО «Ситиус»|\sПредставитель ООО «Ситиус»|\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\.)'
+           r'(Приложение:(.*?)(?=\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\. Представитель ООО «Ситиус»|\sПредставитель ООО «Ситиус»|\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\.))|(Приложение:(.*?)(?=\sПредставитель ООО "Ситиус"))'
         )
     }
 
@@ -29,7 +28,9 @@ class StatementCourtOrder(Document):
     def extract_annex(self):
         pattern = self.patterns['statement_court_order_annex']
         result = re.findall(pattern, self.text)
-        return result[0] if result else self.DEFAULT_EXTRACT_VAlUE
+        if not result:
+            return self.DEFAULT_EXTRACT_VAlUE
+        return [i for i in result[0] if i][0]
 
     @staticmethod
     def _extract_image(pdf_bytes: bytes, poppler_path: str):
