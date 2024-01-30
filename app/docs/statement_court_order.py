@@ -5,7 +5,6 @@ from typing import List, Dict, Tuple
 
 import PyPDF2
 import pandas as pd
-import streamlit as st
 from pdf2image import convert_from_bytes
 from pyzbar.pyzbar import decode
 from stqdm import stqdm
@@ -16,9 +15,12 @@ from .utils import collect_garbage
 
 class StatementCourtOrder(Document):
     patterns = {
-        "statement_court_order_annex": re.compile(
-           r'(Приложение:(.*?)(?=\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\. Представитель ООО «Ситиус»|\sПредставитель ООО «Ситиус»|\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\.))|((?<=Приложение:\s)(.*?)(?=\sПредставитель ООО "Ситиус"))'
-        )
+        "statement_court_order_annex": [
+            re.compile(
+                r'Приложение:(.*?)(?=\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\. Представитель ООО «Ситиус»|\sПредставитель ООО «Ситиус»|\s\d{1,2}\s[а-я]+,?\s\d{4}\sг\.)'),
+            re.compile(r'((?<=Приложение:\s)(.*?)(?=\sПредставитель ООО "Ситиус"))'),
+            re.compile(r'Приложение:\s*(.*?)(?=\s*Представитель)')
+        ]
     }
 
     def __init__(self, file_name: str, pdf_reader: PyPDF2.PdfFileReader, pdf_bytes: bytes):
@@ -26,11 +28,18 @@ class StatementCourtOrder(Document):
         self.image = self._extract_image(pdf_bytes, os.environ.get('POPPLER_PATH'))
 
     def extract_annex(self):
-        pattern = self.patterns['statement_court_order_annex']
-        result = re.findall(pattern, self.text)
-        if not result:
+        patterns = self.patterns['statement_court_order_annex']
+        for pattern in patterns:
+            result = re.findall(pattern, self.text)
+            if result:
+                result = [i for i in result if i]
+                if isinstance(result[0], tuple):
+                    return result[0][0]
+                return result[0]
+        else:
             return self.DEFAULT_EXTRACT_VAlUE
-        return [i for i in result[0] if i][0]
+
+    #
 
     @staticmethod
     def _extract_image(pdf_bytes: bytes, poppler_path: str):
